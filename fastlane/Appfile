@@ -1,0 +1,2 @@
+json_key_file("") # Path to the Google Play Console service account JSON key file
+package_name("com.rsrprojects.knockdock")

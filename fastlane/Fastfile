@@ -1,0 +1,42 @@
+default_platform(:android)
+
+platform :android do
+  desc "Run all unit and regression tests"
+  lane :test do
+    gradle(task: "testDebugUnitTest")
+  end
+
+  desc "Build Debug APK and copy to root directory"
+  lane :build_debug do
+    gradle(task: "assembleDebug")
+    sh("cp ../app/build/outputs/apk/debug/app-debug.apk ../KnockDock.apk")
+    sh("cp ../app/build/outputs/apk/debug/app-debug.apk ../app-debug.apk")
+  end
+
+  desc "Build Release APK & AAB"
+  lane :build_release do
+    gradle(task: "assembleRelease bundleRelease")
+  end
+
+  desc "Deploy a new version to the Google Play Internal Track"
+  lane :internal do
+    gradle(task: "bundleRelease")
+    upload_to_play_store(
+      track: "internal",
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false
+    )
+  end
+
+  desc "Deploy a new version to Google Play Production"
+  lane :deploy do
+    gradle(task: "bundleRelease")
+    upload_to_play_store(
+      track: "production",
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false
+    )
+  end
+end

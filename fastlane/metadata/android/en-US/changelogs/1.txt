@@ -1,0 +1,4 @@
+• Initial public release of KnockDock (v1.0 / build 1)
+• Acoustic desk-knock detection engine, Sensor Lab oscilloscope, and Multi-Trial Gesture Trainer
+• 30 actions across 10 categories, Multi-Step Conditional Macro Engine, and PC Wi-Fi Control Bridge
+• Independent Liquid Glass optics for Cards and Floating Bottom Navigation Bar

@@ -1,0 +1,24 @@
+KnockDock transforms the surface of your physical desk into an acoustic macro controller. Place your Android phone on your desk and knock, tap, or rap on the wood, glass, or metal surface to trigger instant Android actions, multi-step conditional macros, context profiles, smart-home webhooks, and authenticated Windows PC commands.
+
+KEY CAPABILITIES
+
+• Real-Time Acoustic Desk-Surface Detection Engine
+Uses high-frequency accelerometer + gyroscope sensor fusion with a first-order high-pass filter, Exponential Moving Average (EMA) dynamic noise-floor tracking, adaptive thresholding, and refractory echo suppression to isolate crisp desk knocks from ambient vibration.
+
+• Interactive Sensor Lab & 60 FPS Oscilloscope
+Inspect live X/Y/Z acceleration, gyroscope magnitude, dynamic noise floor, peak hold, and impact triggers in real time. Includes a built-in synthetic knock signal injector for testing without tapping.
+
+• Multi-Trial Gesture Trainer & Manual Pattern Editor
+Calibrate custom 1-to-5 knock patterns with 3-trial recording, interval consistency scoring, and auto-calculated timing tolerances—or dial in exact millisecond intervals manually.
+
+• Custom Action Studio (30 Actions Across 10 Categories)
+Includes Desk Mode Toggle, Focus Session Controller (with DND restoration), Workspace Switcher, Music & DAW Session Controller, Presentation Remote, Gesture Modifier keys (MOD_A / MOD_B / MOD_C), Snippet & Clipboard Launcher, Screenshot & Annotation Workflow, Quick Reminder & Countdown Timer, Quick Voice Memo, Quick Tool Launcher, Playlist & Station Launcher, Smart Home Scene Trigger, Local Webhook / HTTP Request, Reversible State Toggle, Device Finder Alert, Emergency Light, and a Multi-Step Conditional Macro Engine.
+
+• Safe Dry-Run Simulation & Loop Protection
+Every action and multi-step macro supports side-effect-free dry-run validation, cycle detection (up to depth 4), per-step retry policies, and concurrency rules (Ignore, Restart, Queue, Cancel).
+
+• Persistent Background Execution
+Runs reliably when the app is minimized or closed via a foreground sensor service, partial wake lock, battery optimization exemption, and Android 10+ overlay launch bridge.
+
+• Independent Liquid Glass UI & Elastic Squish Physics
+Pure dark-mode interface featuring independent optical controls for Cards vs. Floating Bottom Navigation Bar (blur radius, lens refraction, chromatic dispersion, rim highlight, and long elastic touch squish physics) neatly organized into collapsible Settings folders.

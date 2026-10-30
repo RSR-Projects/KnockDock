@@ -1,0 +1,5 @@
+• Permanent release identity (com.rsrprojects.knockdock)
+• Expanded Action Studio with 30 actions, conditional macros, and dry-run simulation
+• Background app & URL launch bridge when app is minimized or closed
+• Folder-organized Settings with smoother blur slider and elastic squish physics
+• Refined compact typography and horizontal layout spacing across all screens

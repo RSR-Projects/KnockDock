@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Outer vibration wave arc 1 -->
+    <path
+        android:pathData="M 32,38 C 22,46 22,62 32,70"
+        android:strokeWidth="3.2"
+        android:strokeColor="#38BDF8"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 76,38 C 86,46 86,62 76,70"
+        android:strokeWidth="3.2"
+        android:strokeColor="#38BDF8"
+        android:strokeLineCap="round" />
+
+    <!-- Mid vibration wave arc 2 -->
+    <path
+        android:pathData="M 39,43 C 33,49 33,59 39,65"
+        android:strokeWidth="3"
+        android:strokeColor="#818CF8"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 69,43 C 75,49 75,59 69,65"
+        android:strokeWidth="3"
+        android:strokeColor="#818CF8"
+        android:strokeLineCap="round" />
+
+    <!-- Phone on dock base plate -->
+    <path
+        android:pathData="M 45,36 L 63,36 C 65.2,36 67,37.8 67,40 L 67,68 C 67,70.2 65.2,72 63,72 L 45,72 C 42.8,72 41,70.2 41,68 L 41,40 C 41,37.8 42.8,36 45,36 Z"
+        android:fillColor="#0F172A"
+        android:strokeWidth="2.5"
+        android:strokeColor="#F8FAFC" />
+
+    <!-- Central impact pulse dot / beacon -->
+    <path
+        android:pathData="M 54,49 A 5,5 0 1 0 54,59 A 5,5 0 1 0 54,49 Z"
+        android:fillColor="#38BDF8" />
+
+    <!-- Dock vibration surface baseline -->
+    <path
+        android:pathData="M 28,79 L 80,79"
+        android:strokeWidth="2.8"
+        android:strokeColor="#38BDF8"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 36,84 L 72,84"
+        android:strokeWidth="1.8"
+        android:strokeColor="#818CF8"
+        android:strokeLineCap="round" />
+</vector>
