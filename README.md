@@ -46,18 +46,7 @@
 ![Min SDK](fastlane/badges/min_sdk_24.svg)
 ![Target SDK](fastlane/badges/target_sdk_36.svg)
 
-### Direct Release APK Download Options
 
-| Package / Artifact | Location | Description | Direct Link |
-| :--- | :--- | :--- | :--- |
-| **Root Release APK (Primary)** | [`./KnockDock.apk`](./KnockDock.apk) | Signed production **Release APK** in the repository root | [**Download `KnockDock.apk`**](./KnockDock.apk) |
-| **Root Release APK (Lowercase)** | [`./knockdock.apk`](./knockdock.apk) | Lowercase alias of the signed **Release APK** for CLI scripts | [**Download `knockdock.apk`**](./knockdock.apk) |
-| **Root Standard Release APK** | [`./app-release.apk`](./app-release.apk) | Signed **Release APK** (`app-release.apk`) in the repository root | [**Download `app-release.apk`**](./app-release.apk) |
-| **Gradle Release Output APK** | [`app/build/outputs/apk/release/app-release.apk`](./app/build/outputs/apk/release/app-release.apk) | Standard Gradle `assembleRelease` build output path | [**Download Gradle Release APK**](./app/build/outputs/apk/release/app-release.apk) |
-| **GitHub Releases** | [`https://github.com/RSR-Projects/KnockDock/releases`](https://github.com/RSR-Projects/KnockDock/releases) | Official GitHub Releases page for versioned downloads & changelogs | [**Open GitHub Releases**](https://github.com/RSR-Projects/KnockDock/releases) |
-
-> **Important Upgrade Note (`com.rsrprojects.knockdock`)**:
-> If you previously installed an early development prototype that used a different package ID or signing key, back up your custom profiles, gestures, and actions first via **Profiles & Mappings → Export JSON**, uninstall the old prototype build, install the signed **Release APK**, and import your JSON backup.
 
 ---
 
