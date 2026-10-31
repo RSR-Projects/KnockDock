@@ -1,27 +1,25 @@
 <div align="center">
 
-
+<img src="fastlane/icon.png" alt="KnockDock App Icon" width="120" height="120" />
 
 # KnockDock
 
-**Acoustic Desk-Surface Knock & Vibration Macro Controller for Android & Windows PC**
+**Turn Physical Desk Knocks into Instant Android, Smart Home & PC Actions**
 
-[![Platform](https://img.shields.io/badge/Platform-Android_7.0%2B_(API_26%2B)-00E5FF?style=for-the-badge&logo=android&logoColor=white)](#)
-[![Package ID](https://img.shields.io/badge/Package-com.rsrprojects.knockdock-6366F1?style=for-the-badge)](#)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.0%2B_Jetpack_Compose-10B981?style=for-the-badge&logo=kotlin&logoColor=white)](#)
-[![UI Engine](https://img.shields.io/badge/UI-Liquid_Glass_%2B_Elastic_Squish-38EFFF?style=for-the-badge)](#10-liquid-glass-optical-engine--elastic-squish-physics)
-[![Actions](https://img.shields.io/badge/Action_Studio-30_Actions_%2F_10_Categories-F59E0B?style=for-the-badge)](#4-custom-action-studio-all-30-actions-explained)
-[![Fastlane](https://img.shields.io/badge/Fastlane-Ready-FF2D55?style=for-the-badge&logo=fastlane&logoColor=white)](#12-fastlane-directory--store-metadata)
-
-<br />
-
-
-[![GitHub Releases](https://img.shields.io/badge/📦_GitHub_Releases-Latest_Release-6366F1?style=for-the-badge&logo=github&logoColor=white)](../../releases/latest)
-[![View Screenshots](https://img.shields.io/badge/🖼_Browse_Screenshots-Fastlane_Gallery-F59E0B?style=for-the-badge)](#screenshots--fastlane-visual-gallery)
+[![Platform API 24+](fastlane/badges/platform_api24.svg)](#releases--release-apk-download)
+[![Package ID](fastlane/badges/package_id.svg)](#releases--release-apk-download)
+[![Release Build](fastlane/badges/release_apk.svg)](#releases--release-apk-download)
+[![Kotlin & Compose](fastlane/badges/kotlin_compose.svg)](#complete-feature-reference)
+[![Liquid Glass Engine](fastlane/badges/liquid_glass.svg)](#8-kyant0-liquid-glass-optical-engine--12-folder-settings)
+[![Action Studio](fastlane/badges/action_studio.svg)](#4-custom-action-studio-all-30-actions-explained)
+[![License](fastlane/badges/license_apache.svg)](https://github.com/RSR-Projects/KnockDock)
 
 <br />
 
-<img src="fastlane/featureGraphic.png" alt="KnockDock Feature Graphic" width="820" />
+[![Download Release KnockDock.apk](fastlane/badges/dl_knockdock_apk.svg)](./KnockDock.apk)
+[![Download app-release.apk](fastlane/badges/dl_app_release.svg)](./app-release.apk)
+[![GitHub Releases](fastlane/badges/github_releases.svg)](https://github.com/RSR-Projects/KnockDock/releases)
+[![Browse Screenshots](fastlane/badges/screenshots_gallery.svg)](#screenshots--fastlane-visual-gallery)
 
 </div>
 
@@ -29,50 +27,57 @@
 
 ## Overview
 
-**KnockDock** turns the physical surface of your desk into an intelligent acoustic and structural-vibration macro controller. Place your Android device anywhere on your desk and knock, tap, or rap on the wood, glass, laminate, or metal surface to trigger:
+**KnockDock** transforms the physical surface of your desk into an acoustic and structural-vibration macro controller. Place your Android phone anywhere on your desk and knock, tap, or rap on the wood, glass, laminate, or metal surface to trigger:
 
 - **30 Built-In Android, Smart Home & PC Actions** across 10 specialized categories
 - **Multi-Step Conditional Macros** with dry-run simulation, cycle protection, step retries, and concurrency policies
 - **Context Profiles & Gesture Modifier Chords** (`MOD_A`, `MOD_B`, `MOD_C`) that multiply your knock vocabulary
-- **Background App & URL Launching** that works even when KnockDock is minimized or closed
-- **Authenticated Wi-Fi PC Control Bridge** 
-- **Pure Dark-Mode Liquid Glass UI** with independent optical controls for Cards vs. Floating Bottom Navigation Bar and long, fast, spring-physics touch squish animations
+- **Background App & URL Launching** that works reliably even when KnockDock is minimized or closed
+- **Authenticated Wi-Fi PC Control Bridge** for Windows/Mac virtual desktops, DAW transport, and presentation slides
+- **Real-Time Kyant0 Liquid Glass UI** (`io.github.kyant0:backdrop` & `io.github.kyant0:shapes`) with independent optical settings for Cards vs. Floating Bottom Navigation Bar, stationary container cards, and zero-recomposition hardware-layer touch physics on interactive controls
+- **12 Collapsible Settings & About Folders** (closed by default) for a clean, minimal dark-mode experience with zero text clipping
 
 ---
 
-## Releases & Download
+## Releases & Release APK Download
 
-![Release v1.0](https://img.shields.io/badge/Latest_Version-v1.0_(Build_1)-00E5FF?style=flat-square)
-![App ID](https://img.shields.io/badge/Application_ID-com.rsrprojects.knockdock-10B981?style=flat-square)
-![Min SDK](https://img.shields.io/badge/Min_SDK-Android_7.0_(API_24)-6366F1?style=flat-square)
-![Target SDK](https://img.shields.io/badge/Target_SDK-Android_15_(API_36)-F59E0B?style=flat-square)
+![Release Version](fastlane/badges/release_apk.svg)
+![App ID](fastlane/badges/package_id.svg)
+![Min SDK](fastlane/badges/min_sdk_24.svg)
+![Target SDK](fastlane/badges/target_sdk_36.svg)
 
-### Direct Download Options
-)
-| **Gradle Output APK** | [`app/build/outputs/apk/debug/app-debug.apk`](./app/build/outputs/apk/debug/app-debug.apk) | Standard Gradle build artifact path | [**Download Gradle APK**](./app/build/outputs/apk/debug/app-debug.apk) |
-| **GitHub Releases** | [`/releases/latest`](../../releases/latest) | Official tagged releases and changelogs | [**Open Releases Page**](../../releases/latest) |
+### Direct Release APK Download Options
 
+| Package / Artifact | Location | Description | Direct Link |
+| :--- | :--- | :--- | :--- |
+| **Root Release APK (Primary)** | [`./KnockDock.apk`](./KnockDock.apk) | Signed production **Release APK** in the repository root | [**Download `KnockDock.apk`**](./KnockDock.apk) |
+| **Root Release APK (Lowercase)** | [`./knockdock.apk`](./knockdock.apk) | Lowercase alias of the signed **Release APK** for CLI scripts | [**Download `knockdock.apk`**](./knockdock.apk) |
+| **Root Standard Release APK** | [`./app-release.apk`](./app-release.apk) | Signed **Release APK** (`app-release.apk`) in the repository root | [**Download `app-release.apk`**](./app-release.apk) |
+| **Gradle Release Output APK** | [`app/build/outputs/apk/release/app-release.apk`](./app/build/outputs/apk/release/app-release.apk) | Standard Gradle `assembleRelease` build output path | [**Download Gradle Release APK**](./app/build/outputs/apk/release/app-release.apk) |
+| **GitHub Releases** | [`https://github.com/RSR-Projects/KnockDock/releases`](https://github.com/RSR-Projects/KnockDock/releases) | Official GitHub Releases page for versioned downloads & changelogs | [**Open GitHub Releases**](https://github.com/RSR-Projects/KnockDock/releases) |
 
+> **Important Upgrade Note (`com.rsrprojects.knockdock`)**:
+> If you previously installed an early development prototype that used a different package ID or signing key, back up your custom profiles, gestures, and actions first via **Profiles & Mappings → Export JSON**, uninstall the old prototype build, install the signed **Release APK**, and import your JSON backup.
 
 ---
 
 ## Screenshots & Fastlane Visual Gallery
 
-![Fastlane Screenshots](https://img.shields.io/badge/Fastlane_Screenshots-1080x2400_PNG-00E5FF?style=flat-square)
-![Store Metadata](https://img.shields.io/badge/Metadata-en--US_Complete-10B981?style=flat-square)
-![App Icon](https://img.shields.io/badge/Icon-512x512_PNG-6366F1?style=flat-square)
+![Screenshots Format](https://img.shields.io/badge/Screenshots-1.png_to_6.png-00E5FF?style=plastic&labelColor=0B132B)
+![Fastlane Metadata](https://img.shields.io/badge/Fastlane-en--US_Store_Metadata-10B981?style=plastic&labelColor=0B132B)
+![Icon Path](https://img.shields.io/badge/App_Icon-fastlane%2Ficon.png-6366F1?style=plastic&labelColor=0B132B)
 
-All screenshots and store graphics are stored in both standard Fastlane paths (`fastlane/metadata/android/en-US/images/...`) and convenience paths (`fastlane/screenshots/...` & `fastlane/icon.png`).
+Screenshots are referenced strictly as `1.png`, `2.png`, `3.png`, `4.png`, `5.png`, and `6.png` under `fastlane/screenshots/` and `fastlane/metadata/android/en-US/images/phoneScreenshots/`.
 
-| 1. Home Dock & Live Beacon | 2. 60 FPS Sensor Lab & Oscilloscope | 3. 3-Trial Gesture Trainer |
+| 1. Home Dock & Live Beacon (`1.png`) | 2. 60 FPS Sensor Lab & Oscilloscope (`2.png`) | 3. 3-Trial Gesture Trainer (`3.png`) |
 | :---: | :---: | :---: |
-| <a href="fastlane/screenshots/1_dock_home.png"><img src="fastlane/screenshots/1_dock_home.png" alt="Home Dock Screen" width="260" /></a> | <a href="fastlane/screenshots/2_sensor_lab.png"><img src="fastlane/screenshots/2_sensor_lab.png" alt="Sensor Lab Screen" width="260" /></a> | <a href="fastlane/screenshots/3_gesture_trainer.png"><img src="fastlane/screenshots/3_gesture_trainer.png" alt="Gesture Trainer Screen" width="260" /></a> |
-| [View Full Size (`fastlane/screenshots/1.png`)](fastlane/screenshots/1.png) · [Fastlane Path](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png) | [View Full Size (`fastlane/screenshots/2.png`)](fastlane/screenshots/2.png) · [Fastlane Path](fastlane/metadata/android/en-US/images/phoneScreenshots/2.png) | [View Full Size (`fastlane/screenshots/3.png`)](fastlane/screenshots/3.png) · [Fastlane Path](fastlane/metadata/android/en-US/images/phoneScreenshots/3.png) |
+| <a href="fastlane/screenshots/1.png"><img src="fastlane/screenshots/1.png" alt="1.png - Home Dock Screen" width="260" /></a> | <a href="fastlane/screenshots/2.png"><img src="fastlane/screenshots/2.png" alt="2.png - Sensor Lab Screen" width="260" /></a> | <a href="fastlane/screenshots/3.png"><img src="fastlane/screenshots/3.png" alt="3.png - Gesture Trainer Screen" width="260" /></a> |
+| [`fastlane/screenshots/1.png`](fastlane/screenshots/1.png) · [Fastlane `1.png`](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png) | [`fastlane/screenshots/2.png`](fastlane/screenshots/2.png) · [Fastlane `2.png`](fastlane/metadata/android/en-US/images/phoneScreenshots/2.png) | [`fastlane/screenshots/3.png`](fastlane/screenshots/3.png) · [Fastlane `3.png`](fastlane/metadata/android/en-US/images/phoneScreenshots/3.png) |
 
-| 4. Custom Action Studio (30 Actions) | 5. Context Profiles & Modifier Chords | 6. Folder-Categorized Settings & Glass |
+| 4. Custom Action Studio (`4.png`) | 5. Context Profiles & Chords (`5.png`) | 6. 12-Folder Settings & About (`6.png`) |
 | :---: | :---: | :---: |
-| <a href="fastlane/screenshots/4_action_studio.png"><img src="fastlane/screenshots/4_action_studio.png" alt="Action Studio Screen" width="260" /></a> | <a href="fastlane/screenshots/5_profiles_mappings.png"><img src="fastlane/screenshots/5_profiles_mappings.png" alt="Profiles & Mappings Screen" width="260" /></a> | <a href="fastlane/screenshots/6_settings_folders.png"><img src="fastlane/screenshots/6_settings_folders.png" alt="Settings Folders Screen" width="260" /></a> |
-| [View Full Size (`fastlane/screenshots/4.png`)](fastlane/screenshots/4.png) · [Fastlane Path](fastlane/metadata/android/en-US/images/phoneScreenshots/4.png) | [View Full Size (`fastlane/screenshots/5.png`)](fastlane/screenshots/5.png) · [Fastlane Path](fastlane/metadata/android/en-US/images/phoneScreenshots/5.png) | [View Full Size (`fastlane/screenshots/6.png`)](fastlane/screenshots/6.png) · [Fastlane Path](fastlane/metadata/android/en-US/images/phoneScreenshots/6.png) |
+| <a href="fastlane/screenshots/4.png"><img src="fastlane/screenshots/4.png" alt="4.png - Action Studio Screen" width="260" /></a> | <a href="fastlane/screenshots/5.png"><img src="fastlane/screenshots/5.png" alt="5.png - Profiles & Mappings Screen" width="260" /></a> | <a href="fastlane/screenshots/6.png"><img src="fastlane/screenshots/6.png" alt="6.png - Settings & About Folders Screen" width="260" /></a> |
+| [`fastlane/screenshots/4.png`](fastlane/screenshots/4.png) · [Fastlane `4.png`](fastlane/metadata/android/en-US/images/phoneScreenshots/4.png) | [`fastlane/screenshots/5.png`](fastlane/screenshots/5.png) · [Fastlane `5.png`](fastlane/metadata/android/en-US/images/phoneScreenshots/5.png) | [`fastlane/screenshots/6.png`](fastlane/screenshots/6.png) · [Fastlane `6.png`](fastlane/metadata/android/en-US/images/phoneScreenshots/6.png) |
 
 ---
 
@@ -80,18 +85,18 @@ All screenshots and store graphics are stored in both standard Fastlane paths (`
 
 ### 1. Acoustic & Structural Vibration Detection Engine
 
-![DSP Engine](https://img.shields.io/badge/DSP-High--Pass_Filter_%2B_EMA_Noise_Floor-00E5FF?style=flat-square)
-![Sampling](https://img.shields.io/badge/Sampling-SENSOR__DELAY__GAME_(~200_Hz)-10B981?style=flat-square)
-![Anti-Echo](https://img.shields.io/badge/Anti--Echo-Refractory_%26_Gyro_Rejection-6366F1?style=flat-square)
+![DSP Engine](https://img.shields.io/badge/DSP-High--Pass_Filter_%2B_EMA_Noise_Floor-00E5FF?style=plastic&labelColor=0B132B)
+![Sampling](https://img.shields.io/badge/Sampling-SENSOR__DELAY__GAME_(~200_Hz)-10B981?style=plastic&labelColor=0B132B)
+![Anti-Echo](https://img.shields.io/badge/Anti--Echo-Refractory_%26_Gyro_Rejection-6366F1?style=plastic&labelColor=0B132B)
 
 - **6-Axis Sensor Fusion (`SensorHelper.kt` & `SignalFilter.kt`)**:
-  - Combines 3-axis `TYPE_ACCELEROMETER` and 3-axis `TYPE_GYROSCOPE` streams at high speed.
+  - Combines 3-axis `TYPE_ACCELEROMETER` and 3-axis `TYPE_GYROSCOPE` streams in real time.
   - Applies a first-order **High-Pass Filter (HPF)** ($\alpha = 0.82$) to strip static gravity ($9.81\text{ m/s}^2$) and slow desk tilt while isolating sharp z-axis structural knock impulses.
 - **Dynamic Exponential Moving Average (EMA) Noise Floor (`ImpactDetector.kt`)**:
-  - Continuously tracks ambient room/desk vibration (typing, fan hum, music speakers) and computes an adaptive trigger threshold:
+  - Continuously tracks ambient room/desk vibration (typing, fan hum, speakers) and computes an adaptive trigger threshold:
     $$\text{Effective Threshold} = \frac{\text{BaseThreshold} + (\text{NoiseFloor} \times 2.6)}{\text{SensitivityMultiplier} \times \text{SurfaceGain}}$$
 - **Refractory Window & Structural Ringing Suppression**:
-  - Enforces a configurable refractory cooldown (`65 ms – 220 ms`, default `95 ms`) after each detected impact so resonant wood/glass after-vibrations are never double-counted as extra knocks.
+  - Enforces a configurable refractory cooldown (`60 ms – 220 ms`, default `95 ms`) after each detected impact so resonant wood/glass after-vibrations are never double-counted as extra knocks.
 - **Device-Handling & Pick-Up Rejection**:
   - Monitors gyroscope angular velocity magnitude (`rad/s`) and suppresses false knock triggers when the phone is being picked up, tilted, or carried in hand.
 - **Desk Surface Material Presets**:
@@ -101,14 +106,14 @@ All screenshots and store graphics are stored in both standard Fastlane paths (`
 
 ### 2. Real-Time Sensor Lab & 60 FPS Oscilloscope
 
-![Oscilloscope](https://img.shields.io/badge/Oscilloscope-60_FPS_Canvas_Waveform-00E5FF?style=flat-square)
-![Synthetic Injector](https://img.shields.io/badge/Testing-Synthetic_Knock_Injector-10B981?style=flat-square)
+![Oscilloscope](https://img.shields.io/badge/Oscilloscope-60_FPS_Canvas_Waveform-00E5FF?style=plastic&labelColor=0B132B)
+![Synthetic Injector](https://img.shields.io/badge/Testing-Synthetic_Knock_Injector-10B981?style=plastic&labelColor=0B132B)
 
 - **Live High-Pass Impulse Waveform**:
   - Hardware-accelerated Canvas oscilloscope plotting real-time filtered impulse magnitude against the live adaptive threshold line.
   - Supports **Pause / Resume Freeze-Frame** and **Peak-Hold Capture** to inspect exact impulse amplitudes.
 - **6-Axis Telemetry Cards**:
-  - Displays live `Accel X`, `Accel Y`, `Accel Z`, `Filtered Impulse`, `Dynamic Noise Floor`, and `Gyroscope Magnitude` in compact, non-clipping cards.
+  - Displays live `Accel X`, `Accel Y`, `Accel Z`, `Filtered Impulse`, `Dynamic Noise Floor`, and `Gyroscope Magnitude` in spacious, non-clipping cards.
 - **Synthetic Signal Replayer (`SensorReplayer.kt`)**:
   - Injects deterministic sensor waveforms directly into the live detection pipeline (`Single Knock`, `Double Knock`, `Triple Knock`, `Quadruple Knock`, and `Rap-Pause-Rap`) so you can verify gestures and macros without physically tapping.
 
@@ -116,8 +121,8 @@ All screenshots and store graphics are stored in both standard Fastlane paths (`
 
 ### 3. Multi-Trial Gesture Recognition & Gesture Trainer
 
-![3-Trial Calibration](https://img.shields.io/badge/Trainer-3--Trial_Auto_Calibration-00E5FF?style=flat-square)
-![Manual Editor](https://img.shields.io/badge/Editor-Millisecond_Precision-6366F1?style=flat-square)
+![3-Trial Calibration](https://img.shields.io/badge/Trainer-3--Trial_Auto_Calibration-00E5FF?style=plastic&labelColor=0B132B)
+![Manual Editor](https://img.shields.io/badge/Editor-Millisecond_Precision-6366F1?style=plastic&labelColor=0B132B)
 
 - **Temporal Pattern Classifier (`GestureClassifier.kt`)**:
   - Segments impact sequences when quiet time exceeds the sequence timeout window (`520 ms`).
@@ -132,9 +137,9 @@ All screenshots and store graphics are stored in both standard Fastlane paths (`
 
 ### 4. Custom Action Studio (All 30 Actions Explained)
 
-![30 Actions](https://img.shields.io/badge/Total_Actions-30_Built--In_Types-00E5FF?style=flat-square)
-![Dry-Run Safe](https://img.shields.io/badge/Dry--Run_Simulation-Zero_Side_Effects-10B981?style=flat-square)
-![Validation](https://img.shields.io/badge/Validation-Real--Time_Schema_Check-6366F1?style=flat-square)
+![30 Actions](https://img.shields.io/badge/Total_Actions-30_Built--In_Types-00E5FF?style=plastic&labelColor=0B132B)
+![Dry-Run Safe](https://img.shields.io/badge/Dry--Run_Simulation-Zero_Side_Effects-10B981?style=plastic&labelColor=0B132B)
+![Validation](https://img.shields.io/badge/Validation-Real--Time_Schema_Check-6366F1?style=plastic&labelColor=0B132B)
 
 Every action in KnockDock includes a dedicated configuration UI, real-time parameter validation, a **Dry-Run Simulation** button (validates without executing real side effects), a **Live Test** button, and structured execution logs.
 
@@ -215,8 +220,8 @@ Every action in KnockDock includes a dedicated configuration UI, real-time param
 
 ### 5. Multi-Step Conditional Macro Engine & Dry-Run Simulator
 
-![Macro Engine](https://img.shields.io/badge/Macros-Conditional_Branching_%2B_Retries-00E5FF?style=flat-square)
-![Cycle Guard](https://img.shields.io/badge/Safety-Cycle_%26_Depth_Guard_(Max_4)-10B981?style=flat-square)
+![Macro Engine](https://img.shields.io/badge/Macros-Conditional_Branching_%2B_Retries-00E5FF?style=plastic&labelColor=0B132B)
+![Cycle Guard](https://img.shields.io/badge/Safety-Cycle_%26_Depth_Guard_(Max_4)-10B981?style=plastic&labelColor=0B132B)
 
 - **Per-Step Conditions (`StepConditionType`)**:
   - `ALWAYS`: Always execute step.
@@ -236,8 +241,8 @@ Every action in KnockDock includes a dedicated configuration UI, real-time param
 
 ### 6. Context Profiles, Gesture Chords & JSON Backup/Restore
 
-![Profiles](https://img.shields.io/badge/Profiles-Per--Context_Sensitivity_%26_Bindings-6366F1?style=flat-square)
-![Portability](https://img.shields.io/badge/Backup-Full_JSON_Import_%2F_Export-10B981?style=flat-square)
+![Profiles](https://img.shields.io/badge/Profiles-Per--Context_Sensitivity_%26_Bindings-6366F1?style=plastic&labelColor=0B132B)
+![Portability](https://img.shields.io/badge/Backup-Full_JSON_Import_%2F_Export-10B981?style=plastic&labelColor=0B132B)
 
 - **Context Profiles (`DockProfile`)**:
   - Switch between *Desk Commander*, *Focus Guard*, *Media Deck*, or custom profiles. Each profile stores its own sensitivity multiplier, refractory window override, and gesture-to-action mappings.
@@ -252,8 +257,8 @@ Every action in KnockDock includes a dedicated configuration UI, real-time param
 
 ### 7. Background Monitoring & Closed-App Execution Bridge
 
-![Foreground Service](https://img.shields.io/badge/Service-Persistent_Foreground_Sensor_Service-00E5FF?style=flat-square)
-![Android 10+ Launch](https://img.shields.io/badge/Android_10%2B-Background_Activity_Launch_Bridge-10B981?style=flat-square)
+![Foreground Service](https://img.shields.io/badge/Service-Persistent_Foreground_Sensor_Service-00E5FF?style=plastic&labelColor=0B132B)
+![Android 10+ Launch](https://img.shields.io/badge/Android_10%2B-Background_Activity_Launch_Bridge-10B981?style=plastic&labelColor=0B132B)
 
 - **Persistent Foreground Service (`KnockMonitoringService.kt`)**:
   - Runs with `START_STICKY`, a dedicated persistent notification, and a partial CPU `WakeLock` (`KnockDock::SensorMonitoringWakeLock`) so desk knocks are detected even when the screen is off or the app is swiped away.
@@ -262,22 +267,32 @@ Every action in KnockDock includes a dedicated configuration UI, real-time param
 
 ---
 
-### 8. Folder-Categorized Settings & Independent Liquid Glass Engine
+### 8. Kyant0 Liquid Glass Optical Engine & 12-Folder Settings
 
-![Dark Mode](https://img.shields.io/badge/Theme-Pure_Dark_Mode-040816?style=flat-square)
-![Independent Optics](https://img.shields.io/badge/Optics-Independent_Card_vs_Nav_Dock_Glass-00E5FF?style=flat-square)
-![Elastic Physics](https://img.shields.io/badge/Physics-Long_Fast_Elastic_Squish-10B981?style=flat-square)
+![Kyant0 Backdrop](https://img.shields.io/badge/Backdrop-io.github.kyant0%3Abackdrop%3A1.0.6-00E5FF?style=plastic&labelColor=0B132B)
+![Independent Optics](https://img.shields.io/badge/Optics-Independent_Card_vs_Nav_Dock_Glass-6366F1?style=plastic&labelColor=0B132B)
+![Stationary Cards](https://img.shields.io/badge/Touch_Physics-Interactive_Controls_Only_(Stationary_Cards)-10B981?style=plastic&labelColor=0B132B)
 
-- **Clean Folder-Categorized Settings (`SettingsScreen.kt`)**:
-  - All settings are organized into **6 collapsible folders** so the interface stays minimal, fast, and uncluttered:
+- **Real-Time Kyant0 Backdrop Optical Engine (`LiquidGlassComponents.kt`)**:
+  - Powered by [`Kyant0/AndroidLiquidGlass`](https://github.com/Kyant0/AndroidLiquidGlass) (`io.github.kyant0:backdrop:1.0.6` and `io.github.kyant0:shapes:1.2.0`) with `rememberLayerBackdrop()`, real-time GPU blur (`blur()`), lens refraction (`lens()`), chromatic dispersion (`chromaticAberration`), and `RoundedRectangle` continuous capsule geometry.
+- **Strict Optical Independence**:
+  - **Cards (`LocalCardGlassSettings`)** and the **Floating Bottom Navigation Bar (`LocalNavigationGlassSettings`)** read from completely independent `CompositionLocal` state objects—adjusting card blur, refraction, or tint never alters the navigation dock, and vice versa.
+- **Zero-Recomposition Hardware-Layer Touch Physics (`LiquidTouchModifier.kt`)**:
+  - Interactive controls (`LiquidGlassButton`, `LiquidGlassSwitch`, `LiquidGlassSlider`, `LiquidGlassChip`, `LiquidGlassSegmentedRow`, `LiquidGlassNavBar`) respond to touch and drag via `graphicsLayer` translation and directional stretch/squish, while container cards (`LiquidGlassCard`) remain completely stationary so scrolling and reading are never disrupted.
+- **12 Collapsible Settings & About Folders (`SettingsScreen.kt` & `AboutSettingsSection.kt`)**:
+  - All 12 folders start **closed by default** so the Settings screen is uncluttered, fast to scan, and free of text clipping:
     1. **Background Launch & Power** (*Appear on Top* overlay permission, battery optimization exemption, auto-start on boot)
-    2. **Card Liquid Glass & Squish** (Card blur radius `0–35 dp`, quadratic fine-grained blue/tint intensity curve, elastic squish stretch, plus a nested *More Card Options* sub-folder for refraction bevel, rim highlight, corner radius, contrast, and lightweight mode)
-    3. **Bottom Nav Bar Glass** (Independent floating navigation dock blur radius `0–40 dp`, lens refraction, chromatic dispersion, pill opacity, and dock squish)
-    4. **Sensor & Knock Detection** (Sensitivity multiplier `0.4x–2.5x`, refractory window `60–220 ms`, gyro pick-up rejection, surface material preset)
-    5. **Haptics & Audio Feedback** (Haptic confirmation toggle and acoustic synth chirp toggle)
-    6. **PC Control Bridge (Wi-Fi)** (Host IP, port, auth token, and live connection test)
-- **Compact Typography & Horizontal Space Optimization**:
-  - Scaled Material 3 typography (`Type.kt`) and compact container paddings (`12.dp`) ensure labels, 6-option segmented rows, telemetry metrics, and bottom navigation tabs never clip or truncate on the sides.
+    2. **Card Liquid Glass** (Card blur radius, quadratic fine-grained blue/tint intensity curve, plus a nested *Advanced Card Optics* sub-folder for refraction bevel, rim highlight, corner radius, contrast, and lightweight mode)
+    3. **Bottom Nav Bar Glass** (Independent floating navigation dock blur radius, lens refraction, chromatic dispersion, and pill opacity)
+    4. **Liquid Touch Physics** (Enable/disable interactive control squish & drag, stretch intensity, drag responsiveness, and spring bounce)
+    5. **Sensor & Knock Detection** (Sensitivity multiplier `0.4x–2.5x`, refractory window `60–220 ms`, gyro pick-up rejection, surface material preset)
+    6. **Haptics & Audio Feedback** (Haptic confirmation toggle and acoustic synth chirp toggle)
+    7. **PC Control Bridge (Wi-Fi)** (Host IP, port, auth token, and live connection test)
+    8. **About KnockDock** (Centered hero app icon, tagline *"Turn physical knocks into actions."*, installed release version `v1.0 (1) · RELEASE`, and project overview)
+    9. **Developer & Licence** (Developer `RSR-Projects`, `Apache License 2.0`, and open-source project details)
+    10. **GitHub Repository & Links** (Interactive buttons for **Star on GitHub**, **View Source Code**, **Report a Bug**, and **View Releases** pointing to `https://github.com/RSR-Projects/KnockDock`)
+    11. **Privacy & Sensor Data** (Transparent breakdown of local accelerometer/gyroscope processing, opt-in voice memo storage, and explicit LAN webhook/PC bridge traffic)
+    12. **Licences & Release Build** (Full-width stacked build metadata for `com.rsrprojects.knockdock`, `RELEASE` build type, `Min SDK 24 / Target SDK 36`, and third-party open-source dependency notices)
 
 ---
 
@@ -287,15 +302,8 @@ Every action in KnockDock includes a dedicated configuration UI, real-time param
 fastlane/
 ├── Appfile                                          # Package ID: com.rsrprojects.knockdock
 ├── Fastfile                                         # Lanes: test, build_debug, build_release, internal, deploy
-├── icon.png                                         # 512x512 App Icon (convenience root copy)
-├── featureGraphic.png                               # 1024x500 Feature Graphic (convenience root copy)
-├── screenshots/                                     # 1080x2400 Phone Screenshots (convenience copies)
-│   ├── 1.png / 1_dock_home.png
-│   ├── 2.png / 2_sensor_lab.png
-│   ├── 3.png / 3_gesture_trainer.png
-│   ├── 4.png / 4_action_studio.png
-│   ├── 5.png / 5_profiles_mappings.png
-│   └── 6.png / 6_settings_folders.png
+├── screenshots/                                     # Phone Screenshots directory (1.png .. 6.png)
+│   └── .gitkeep
 └── metadata/
     └── android/
         └── en-US/
@@ -306,14 +314,31 @@ fastlane/
             │   ├── default.txt
             │   └── 1.txt
             └── images/
-                ├── icon.png                         # 512x512 Play Store Icon
-                ├── featureGraphic.png               # 1024x500 Play Store Feature Graphic
-                └── phoneScreenshots/
-                    ├── 1.png .. 6.png
-                    └── 1_dock_home.png .. 6_settings_folders.png
+                ├── .gitkeep
+                └── phoneScreenshots/                # Fastlane Phone Screenshots (1.png .. 6.png)
+                    └── .gitkeep
 ```
 
 ---
 
+## Building, Signing & Running Tests
 
+![Gradle Wrapper](https://img.shields.io/badge/Gradle_Wrapper-8.13_(gradle--wrapper.jar_Included)-00E5FF?style=plastic&labelColor=0B132B&logo=gradle&logoColor=00E5FF)
+![Release Signing](https://img.shields.io/badge/Release_Signing-my--upload--key.jks_(Alias%3A_upload)-10B981?style=plastic&labelColor=0B132B)
+
+```bash
+# Verify Gradle Wrapper
+./gradlew --version
+
+# Run unit & regression test suites
+./gradlew :app:testDebugUnitTest
+
+# Build signed Release APK using the included upload keystore
+KEYSTORE_PATH="$(pwd)/my-upload-key.jks" \
+STORE_PASSWORD="android" \
+KEY_PASSWORD="android" \
+./gradlew :app:assembleRelease
+
+# Copy signed Release APK to repository root
+cp app/build/outputs/apk/release/app-release.apk ./KnockDock.apk
 ```

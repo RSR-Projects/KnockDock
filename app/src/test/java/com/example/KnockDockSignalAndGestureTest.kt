@@ -405,4 +405,47 @@ class KnockDockSignalAndGestureTest {
             execScope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
         }
     }
+
+    @Test
+    fun testAboutSection_constantsBuildConfigPrivacyAndThirdPartyLicenses() {
+        // 1. Verify official KnockDock About constants & GitHub URLs
+        assertEquals("KnockDock", com.example.knockdock.ui.screens.KnockDockAboutConstants.APP_NAME)
+        assertEquals("Turn physical knocks into actions.", com.example.knockdock.ui.screens.KnockDockAboutConstants.TAGLINE)
+        assertEquals("RSR-Projects", com.example.knockdock.ui.screens.KnockDockAboutConstants.DEVELOPER_NAME)
+        assertEquals("Apache License 2.0", com.example.knockdock.ui.screens.KnockDockAboutConstants.LICENSE_NAME)
+        assertEquals("RELEASE", com.example.knockdock.ui.screens.KnockDockAboutConstants.BUILD_VARIANT_RELEASE)
+        assertEquals(
+            "https://github.com/RSR-Projects/KnockDock",
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_REPO_URL
+        )
+        assertEquals(
+            "https://github.com/RSR-Projects/KnockDock/issues",
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_ISSUES_URL
+        )
+        assertEquals(
+            "https://github.com/RSR-Projects/KnockDock/releases",
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_RELEASES_URL
+        )
+
+        // 2. Verify BuildConfig version & applicationId are dynamically generated and valid
+        assertEquals("com.rsrprojects.knockdock", BuildConfig.APPLICATION_ID)
+        assertTrue(BuildConfig.VERSION_NAME.isNotBlank())
+        assertTrue(BuildConfig.VERSION_CODE >= 1)
+
+        // 3. Verify Privacy disclosures match actual sensor & network implementation
+        val privacyDisclosures = com.example.knockdock.ui.screens.getKnockDockPrivacyDisclosures()
+        assertEquals(4, privacyDisclosures.size)
+        assertTrue(privacyDisclosures.any { it.description.contains("TYPE_ACCELEROMETER") && it.description.contains("TYPE_GYROSCOPE") })
+        assertTrue(privacyDisclosures.any { it.description.contains("RECORD_AUDIO") })
+        assertTrue(privacyDisclosures.any { it.badge == "Zero Analytics" })
+
+        // 4. Verify Open-Source Third-Party Licences match actual dependencies in libs.versions.toml
+        val licenses = com.example.knockdock.ui.screens.getKnockDockThirdPartyLicenses()
+        assertEquals(9, licenses.size)
+        assertTrue(licenses.any { it.artifactCoordinates.contains("io.github.kyant0:backdrop") && it.licenseName == "Apache License 2.0" })
+        assertTrue(licenses.any { it.artifactCoordinates.contains("com.squareup.retrofit2:retrofit") && it.licenseName == "Apache License 2.0" })
+        assertTrue(licenses.any { it.artifactCoordinates.contains("com.squareup.moshi:moshi-kotlin") && it.licenseName == "Apache License 2.0" })
+        assertTrue(licenses.any { it.artifactCoordinates.contains("androidx.room:room-runtime") && it.licenseName == "Apache License 2.0" })
+    }
 }
+

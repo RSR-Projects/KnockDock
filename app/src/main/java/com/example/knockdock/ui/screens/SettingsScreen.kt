@@ -26,12 +26,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Vibration
@@ -90,7 +94,7 @@ fun SettingsScreen(
     val settings by controller.repository.settingsFlow.collectAsState()
     val scope = rememberCoroutineScope()
 
-    // Track folder open/closed states — minimal, clean folder-based organization
+    // Track folder open/closed states — minimal, clean folder-based organization (all closed by default)
     var isBackgroundFolderOpen by remember { mutableStateOf(false) }
     var isCardGlassFolderOpen by remember { mutableStateOf(false) }
     var isCardAdvancedOpen by remember { mutableStateOf(false) }
@@ -98,6 +102,12 @@ fun SettingsScreen(
     var isDetectionFolderOpen by remember { mutableStateOf(false) }
     var isFeedbackFolderOpen by remember { mutableStateOf(false) }
     var isPcFolderOpen by remember { mutableStateOf(false) }
+    var isAboutFolderOpen by remember { mutableStateOf(false) }
+    var isAboutDeveloperFolderOpen by remember { mutableStateOf(false) }
+    var isAboutGitHubFolderOpen by remember { mutableStateOf(false) }
+    var isAboutPrivacyFolderOpen by remember { mutableStateOf(false) }
+    var isAboutLicensesFolderOpen by remember { mutableStateOf(false) }
+    val appBuildInfo = remember(context) { resolveInstalledAppBuildInfo(context) }
 
     // Live check for Overlay ("Appear on Top") & Battery Optimization exemptions
     var canDrawOverlays by remember {
@@ -1525,6 +1535,116 @@ fun SettingsScreen(
             }
         }
 
+        // =========================================================================
+        // ABOUT KNOCKDOCK — SEPARATE COLLAPSIBLE FOLDERS (ALL CLOSED BY DEFAULT)
+        // =========================================================================
+        item {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "About KnockDock",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "App overview, developer & Apache 2.0 licence, GitHub links, sensor privacy, and release build details",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // FOLDER 8: ABOUT KNOCKDOCK OVERVIEW (APP ICON, TAGLINE, VERSION & PURPOSE)
+        item {
+            SettingsFolderCard(
+                title = "About KnockDock",
+                subtitle = "App icon, tagline, installed release version, and what KnockDock does",
+                icon = Icons.Default.Info,
+                badgeText = "v${appBuildInfo.versionName} • ${appBuildInfo.buildType}",
+                badgeColor = MintSuccess,
+                isExpanded = isAboutFolderOpen,
+                onToggleExpand = { isAboutFolderOpen = !isAboutFolderOpen },
+                visualEffectsQuality = settings.visualEffectsQuality,
+                reducedMotion = settings.reducedMotion,
+                modifier = Modifier.testTag("settings_folder_about")
+            ) {
+                AboutAppOverviewFolderContent()
+            }
+        }
+
+        // FOLDER 9: DEVELOPER & OPEN-SOURCE LICENCE
+        item {
+            SettingsFolderCard(
+                title = "Developer & Licence",
+                subtitle = "Developed by RSR-Projects under the Apache License 2.0",
+                icon = Icons.Default.Person,
+                badgeText = "Apache 2.0",
+                badgeColor = IndigoPulse,
+                isExpanded = isAboutDeveloperFolderOpen,
+                onToggleExpand = { isAboutDeveloperFolderOpen = !isAboutDeveloperFolderOpen },
+                visualEffectsQuality = settings.visualEffectsQuality,
+                reducedMotion = settings.reducedMotion,
+                modifier = Modifier.testTag("settings_folder_about_developer")
+            ) {
+                AboutDeveloperFolderContent()
+            }
+        }
+
+        // FOLDER 10: GITHUB REPOSITORY & INTERACTIVE LINKS
+        item {
+            SettingsFolderCard(
+                title = "GitHub Repository & Links",
+                subtitle = "Star on GitHub, View Source Code, Report a Bug, and View Releases",
+                icon = Icons.Default.Code,
+                badgeText = "GitHub",
+                badgeColor = CyanGlow,
+                isExpanded = isAboutGitHubFolderOpen,
+                onToggleExpand = { isAboutGitHubFolderOpen = !isAboutGitHubFolderOpen },
+                visualEffectsQuality = settings.visualEffectsQuality,
+                reducedMotion = settings.reducedMotion,
+                modifier = Modifier.testTag("settings_folder_about_github")
+            ) {
+                AboutGitHubFolderContent()
+            }
+        }
+
+        // FOLDER 11: PRIVACY & SENSOR DATA HANDLING
+        item {
+            SettingsFolderCard(
+                title = "Privacy & Sensor Data",
+                subtitle = "On-device accelerometer & gyroscope processing with zero analytics",
+                icon = Icons.Default.PrivacyTip,
+                badgeText = "On-Device",
+                badgeColor = MintSuccess,
+                isExpanded = isAboutPrivacyFolderOpen,
+                onToggleExpand = { isAboutPrivacyFolderOpen = !isAboutPrivacyFolderOpen },
+                visualEffectsQuality = settings.visualEffectsQuality,
+                reducedMotion = settings.reducedMotion,
+                modifier = Modifier.testTag("settings_folder_about_privacy")
+            ) {
+                AboutPrivacyFolderContent()
+            }
+        }
+
+        // FOLDER 12: THIRD-PARTY LICENCES & RELEASE BUILD INFORMATION
+        item {
+            SettingsFolderCard(
+                title = "Licences & Release Build",
+                subtitle = "Open-source third-party libraries and release build configuration",
+                icon = Icons.Default.Gavel,
+                badgeText = appBuildInfo.buildType,
+                badgeColor = MintSuccess,
+                isExpanded = isAboutLicensesFolderOpen,
+                onToggleExpand = { isAboutLicensesFolderOpen = !isAboutLicensesFolderOpen },
+                visualEffectsQuality = settings.visualEffectsQuality,
+                reducedMotion = settings.reducedMotion,
+                modifier = Modifier.testTag("settings_folder_about_licenses")
+            ) {
+                AboutLicensesAndBuildFolderContent()
+            }
+        }
+
         item {
             Spacer(modifier = Modifier.height(110.dp))
         }
@@ -1559,71 +1679,71 @@ private fun SettingsFolderCard(
         reducedMotion = reducedMotion
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onToggleExpand)
-                    .padding(vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(vertical = 4.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Default.FolderOpen else Icons.Default.Folder,
-                        contentDescription = null,
-                        tint = badgeColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = null,
-                                tint = CyanGlow,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.FolderOpen else Icons.Default.Folder,
+                            contentDescription = null,
+                            tint = badgeColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = CyanGlow,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        LiquidStatusPill(
+                            text = badgeText,
+                            statusColor = badgeColor
                         )
                     }
-                }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    LiquidStatusPill(
-                        text = badgeText,
-                        statusColor = badgeColor
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = if (isExpanded) "Collapse Folder" else "Open Folder",
                         tint = TextSecondary,
                         modifier = Modifier
-                            .size(18.dp)
+                            .size(20.dp)
                             .rotate(chevronRotation)
                     )
                 }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             AnimatedVisibility(

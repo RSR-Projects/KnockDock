@@ -496,4 +496,71 @@ class ExampleRobolectricTest {
         assertEquals(CardGlassSettings(), repository.settingsFlow.value.toCardGlassSettings())
         assertEquals(customNav, repository.settingsFlow.value.toNavigationGlassSettings())
     }
+
+    @Test
+    fun `about section resolves real build config metadata github urls privacy and third party licenses`() {
+        val buildInfo = com.example.knockdock.ui.screens.resolveInstalledAppBuildInfo(context)
+        assertEquals("KnockDock", buildInfo.appName)
+        assertEquals("com.rsrprojects.knockdock", buildInfo.applicationId)
+        assertEquals(BuildConfig.VERSION_NAME, buildInfo.versionName)
+        assertEquals(BuildConfig.VERSION_CODE.toLong(), buildInfo.versionCode)
+        assertTrue(buildInfo.buildType.isNotBlank())
+
+        // Verify official constants and strings
+        assertEquals("Turn physical knocks into actions.", context.getString(R.string.about_tagline))
+        assertEquals("RSR-Projects", context.getString(R.string.about_developer_name))
+        assertEquals("Apache License 2.0", context.getString(R.string.about_license_name))
+        assertEquals(
+            "https://github.com/RSR-Projects/KnockDock",
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_REPO_URL
+        )
+        assertEquals(
+            "https://github.com/RSR-Projects/KnockDock/issues",
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_ISSUES_URL
+        )
+        assertEquals(
+            "https://github.com/RSR-Projects/KnockDock/releases",
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_RELEASES_URL
+        )
+
+        // Verify external GitHub link handler dispatches ACTION_VIEW intent with exact repository URLs
+        val shadowApp = shadowOf(context as android.app.Application)
+        shadowApp.clearNextStartedActivities()
+
+        val starOpened = com.example.knockdock.ui.screens.openExternalWebUrl(
+            context,
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_REPO_URL
+        )
+        assertTrue(starOpened)
+        val starIntent = shadowApp.nextStartedActivity
+        assertEquals(android.content.Intent.ACTION_VIEW, starIntent?.action)
+        assertEquals("https://github.com/RSR-Projects/KnockDock", starIntent?.dataString)
+
+        val bugOpened = com.example.knockdock.ui.screens.openExternalWebUrl(
+            context,
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_ISSUES_URL
+        )
+        assertTrue(bugOpened)
+        val bugIntent = shadowApp.nextStartedActivity
+        assertEquals("https://github.com/RSR-Projects/KnockDock/issues", bugIntent?.dataString)
+
+        val releasesOpened = com.example.knockdock.ui.screens.openExternalWebUrl(
+            context,
+            com.example.knockdock.ui.screens.KnockDockAboutConstants.GITHUB_RELEASES_URL
+        )
+        assertTrue(releasesOpened)
+        val releasesIntent = shadowApp.nextStartedActivity
+        assertEquals("https://github.com/RSR-Projects/KnockDock/releases", releasesIntent?.dataString)
+
+        // Verify privacy disclosures and third-party dependency licenses
+        val privacyItems = com.example.knockdock.ui.screens.getKnockDockPrivacyDisclosures()
+        assertTrue(privacyItems.size >= 4)
+        assertTrue(privacyItems.any { it.description.contains("TYPE_ACCELEROMETER") })
+
+        val licenses = com.example.knockdock.ui.screens.getKnockDockThirdPartyLicenses()
+        assertTrue(licenses.size >= 8)
+        assertTrue(licenses.any { it.artifactCoordinates.contains("io.github.kyant0:backdrop") })
+        assertTrue(licenses.any { it.artifactCoordinates.contains("com.squareup.retrofit2:retrofit") })
+    }
 }
+

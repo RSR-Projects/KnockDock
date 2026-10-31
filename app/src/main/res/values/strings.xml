@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">KnockDock</string>
+    <string name="about_section_title">About KnockDock</string>
+    <string name="about_tagline">Turn physical knocks into actions.</string>
+    <string name="about_purpose_description">KnockDock transforms your desk surface into a hands-free acoustic command dock. By analyzing high-frequency accelerometer impulses and gyroscope stability on-device, it recognizes single, double, triple, and custom rhythm knocks to trigger Android automations, multi-step macros, focus sessions, and local Wi-Fi PC commands.</string>
+    <string name="about_developer_name">RSR-Projects</string>
+    <string name="about_license_name">Apache License 2.0</string>
+    <string name="about_github_repo_url">https://github.com/RSR-Projects/KnockDock</string>
+    <string name="about_github_issues_url">https://github.com/RSR-Projects/KnockDock/issues</string>
+    <string name="about_github_releases_url">https://github.com/RSR-Projects/KnockDock/releases</string>
 </resources>

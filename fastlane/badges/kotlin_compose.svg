@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="265" height="30" viewBox="0 0 265 30" role="img" aria-label="Stack: Kotlin 2.0 + Compose M3">
+  <defs>
+    <linearGradient id="glassBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#142238" stop-opacity="0.92"/>
+      <stop offset="55%" stop-color="#0A1222" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#0F1C34" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="accentPill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.32"/>
+      <stop offset="50%" stop-color="#38BDF8" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#00E5FF" stop-opacity="0.38"/>
+    </linearGradient>
+    <linearGradient id="topSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.38"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+    <linearGradient id="rimStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="40%" stop-color="#38BDF8" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#00E5FF" stop-opacity="0.28"/>
+    </linearGradient>
+  </defs>
+  <!-- Frosted dark glass outer capsule -->
+  <rect x="0.75" y="0.75" width="263.5" height="28.5" rx="15" fill="url(#glassBg)" stroke="url(#rimStroke)" stroke-width="1.2"/>
+  <!-- Inner refractive value capsule -->
+  <rect x="76" y="2.5" width="186" height="25" rx="12.5" fill="url(#accentPill)" stroke="#38BDF8" stroke-opacity="0.45" stroke-width="0.8"/>
+  <!-- Top liquid specular reflection arc -->
+  <rect x="6" y="2" width="253" height="11" rx="5.5" fill="url(#topSheen)"/>
+  <!-- Glowing status dot -->
+  <circle cx="13" cy="15.0" r="3.5" fill="#38BDF8"/>
+  <circle cx="13" cy="15.0" r="6" fill="#38BDF8" fill-opacity="0.24"/>
+  <!-- Typography -->
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="11.2" font-weight="600" text-rendering="geometricPrecision">
+    <text x="49.0" y="19" fill="#CBD5E1" text-anchor="middle">Stack</text>
+    <text x="169.0" y="19" fill="#F8FAFC" font-weight="700" text-anchor="middle">Kotlin 2.0 + Compose M3</text>
+  </g>
+</svg>
