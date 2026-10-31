@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="fastlane/metadata/android/en-us/images/icon.png" alt="KnockDock App Icon" width="120" height="120" />
+<img src="fastlane/metadata/android/en-US/images/icon.png" alt="KnockDock App Icon" width="120" height="120" />
 
 # KnockDock
 
