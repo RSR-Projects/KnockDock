@@ -105,6 +105,8 @@ dependencies {
   implementation(libs.androidx.navigation.compose)
   implementation(libs.backdrop)
   implementation(libs.kyant.shapes)
+  implementation(libs.shizuku.api)
+  implementation(libs.shizuku.provider)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   // implementation(libs.coil.compose)

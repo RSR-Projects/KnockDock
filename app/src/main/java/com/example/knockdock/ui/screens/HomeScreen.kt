@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.PlayArrow
@@ -71,8 +72,7 @@ import com.example.knockdock.ui.theme.LiquidGlassSwitch
 import com.example.knockdock.ui.theme.LiquidGlowButton
 import com.example.knockdock.ui.theme.LiquidStatusPill
 import com.example.knockdock.ui.theme.LocalBackdrop
-import com.example.knockdock.ui.theme.liquidTouchGesture
-import com.example.knockdock.ui.theme.rememberLiquidTouchState
+import com.example.knockdock.ui.theme.liquidSquish
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanGlow
 import com.example.ui.theme.CyanGlowBright
@@ -83,6 +83,8 @@ import com.example.ui.theme.SlateGlassDark
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
+import com.example.knockdock.ui.components.HeroAcousticSpectrumRing
+import com.example.knockdock.ui.components.LiquidResonanceDeckCard
 import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.lens
@@ -103,10 +105,12 @@ fun HomeScreen(
     onNavigateToTrainer: () -> Unit,
     onNavigateToLab: () -> Unit,
     onNavigateToProfiles: () -> Unit,
-    onNavigateToActionStudio: () -> Unit
+    onNavigateToActionStudio: () -> Unit,
+    onOpenTutorial: () -> Unit = {}
 ) {
     val isMonitoring by controller.isMonitoring.collectAsState()
     val lastGesture by controller.lastDetectedGesture.collectAsState()
+    val telemetry by controller.sensorHelper.telemetryState.collectAsState()
     val activeProfile by controller.repository.getActiveProfile().collectAsState(initial = null)
     val allProfiles by controller.repository.getAllProfiles().collectAsState(initial = emptyList())
     val mappings by controller.repository.getResolvedMappingsForActiveProfile().collectAsState(initial = emptyList())
@@ -118,7 +122,6 @@ fun HomeScreen(
 
     var isProfileDropdownExpanded by remember { mutableStateOf(false) }
     var isOpticsTunerExpanded by remember { mutableStateOf(false) }
-    val orbTouchState = rememberLiquidTouchState()
 
     LazyColumn(
         modifier = Modifier
@@ -156,11 +159,30 @@ fun HomeScreen(
                     )
                 }
 
-                LiquidStatusPill(
-                    text = if (isMonitoring) "Dock Active" else "Dock Idle",
-                    statusColor = if (isMonitoring) MintSuccess else AmberAlert,
-                    modifier = Modifier.testTag("monitoring_status_pill")
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LiquidGlassIconButton(
+                        onClick = onOpenTutorial,
+                        size = 34.dp,
+                        accentColor = CyanGlow,
+                        modifier = Modifier.testTag("open_tutorial_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = "Tutorial & Permissions Guide",
+                            tint = CyanGlowBright,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    LiquidStatusPill(
+                        text = if (isMonitoring) "Dock Active" else "Dock Idle",
+                        statusColor = if (isMonitoring) MintSuccess else AmberAlert,
+                        modifier = Modifier.testTag("monitoring_status_pill")
+                    )
+                }
             }
         }
 
@@ -182,7 +204,7 @@ fun HomeScreen(
                     val orbLensHeightPx = with(density) { (settings.glassRefractionHeight * 1.15f).dp.toPx() }
                     val orbLensAmountPx = with(density) { (settings.glassRefractionAmount * 1.15f).dp.toPx() }
 
-                    // Refractive Liquid Glass Orb Beacon using Kyant0 drawBackdrop + lens + liquid touch physics
+                    // Refractive Liquid Glass Orb Beacon using Kyant0 drawBackdrop + lens
                     val orbBackdropModifier = if (backdrop != null && settings.visualEffectsQuality != "LOW") {
                         Modifier.drawBackdrop(
                             backdrop = backdrop,
@@ -199,14 +221,6 @@ fun HomeScreen(
                                     )
                                 }
                             },
-                            layerBlock = if (settings.liquidTouchPhysics && !settings.reducedMotion) {
-                                {
-                                    translationX = orbTouchState.offsetXValue * 1.45f
-                                    translationY = orbTouchState.offsetYValue * 1.45f
-                                    scaleX = orbTouchState.scaleXValue
-                                    scaleY = orbTouchState.scaleYValue
-                                }
-                            } else null,
                             highlight = { Highlight.Default },
                             onDrawSurface = {
                                 drawRect(
@@ -242,50 +256,61 @@ fun HomeScreen(
                     }
 
                     Box(
-                        modifier = Modifier
-                            .size(124.dp)
-                            .liquidTouchGesture(
-                                touchState = orbTouchState,
-                                enabled = settings.liquidTouchPhysics && !settings.reducedMotion,
-                                maxDisplacementPx = with(density) { 34.dp.toPx() }
-                            )
-                            .then(orbBackdropModifier)
-                            .border(
-                                BorderStroke(
-                                    2.dp,
-                                    Brush.verticalGradient(
-                                        if (isMonitoring) {
-                                            listOf(Color.White.copy(alpha = 0.7f), CyanGlow, IndigoPulse)
-                                        } else {
-                                            listOf(Color.White.copy(alpha = 0.3f), Color.White.copy(alpha = 0.08f))
-                                        }
-                                    )
-                                ),
-                                CircleShape
-                            )
-                            .clickable {
-                                scope.launch {
-                                    controller.simulateReplay(SensorReplayer.ReplayPreset.SINGLE_KNOCK)
-                                }
-                            },
+                        modifier = Modifier.size(172.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = if (isMonitoring) Icons.Default.Vibration else Icons.Default.TouchApp,
-                                contentDescription = "Dock Status",
-                                tint = if (isMonitoring) CyanGlowBright else TextSecondary,
-                                modifier = Modifier.size(44.dp)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = if (isMonitoring) "LIVE" else "TAP TEST",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isMonitoring) CyanGlowBright else TextSecondary,
-                                maxLines = 1,
-                                softWrap = false
-                            )
+                        HeroAcousticSpectrumRing(
+                            telemetry = telemetry,
+                            waveformBuffer = controller.sensorHelper.waveformBuffer,
+                            bufferWriteIndex = controller.sensorHelper.bufferWriteIndex,
+                            isMonitoring = isMonitoring,
+                            lastGesture = lastGesture,
+                            reducedMotion = settings.reducedMotion,
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .size(124.dp)
+                                .liquidSquish(maxDisplacementPx = 24f)
+                                .then(orbBackdropModifier)
+                                .border(
+                                    BorderStroke(
+                                        2.dp,
+                                        Brush.verticalGradient(
+                                            if (isMonitoring) {
+                                                listOf(Color.White.copy(alpha = 0.7f), CyanGlow, IndigoPulse)
+                                            } else {
+                                                listOf(Color.White.copy(alpha = 0.3f), Color.White.copy(alpha = 0.08f))
+                                            }
+                                        )
+                                    ),
+                                    CircleShape
+                                )
+                                .clickable {
+                                    scope.launch {
+                                        controller.simulateReplay(SensorReplayer.ReplayPreset.SINGLE_KNOCK)
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = if (isMonitoring) Icons.Default.Vibration else Icons.Default.TouchApp,
+                                    contentDescription = "Dock Status",
+                                    tint = if (isMonitoring) CyanGlowBright else TextSecondary,
+                                    modifier = Modifier.size(44.dp)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = if (isMonitoring) "LIVE" else "TAP TEST",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isMonitoring) CyanGlowBright else TextSecondary,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
                         }
                     }
 
@@ -373,6 +398,15 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+
+        // Interactive Liquid Knock Pad & Instant Macro Launchpad
+        item {
+            LiquidResonanceDeckCard(
+                controller = controller,
+                activeMappings = mappings,
+                reducedMotion = settings.reducedMotion
+            )
         }
 
         // Active Profile Selector & Switcher

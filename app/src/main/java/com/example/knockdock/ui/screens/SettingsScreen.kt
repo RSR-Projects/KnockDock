@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Vibration
@@ -102,6 +103,7 @@ fun SettingsScreen(
     var isDetectionFolderOpen by remember { mutableStateOf(false) }
     var isFeedbackFolderOpen by remember { mutableStateOf(false) }
     var isPcFolderOpen by remember { mutableStateOf(false) }
+    var isShizukuFolderOpen by remember { mutableStateOf(false) }
     var isAboutFolderOpen by remember { mutableStateOf(false) }
     var isAboutDeveloperFolderOpen by remember { mutableStateOf(false) }
     var isAboutGitHubFolderOpen by remember { mutableStateOf(false) }
@@ -1471,6 +1473,51 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+        }
+
+        // =========================================================================
+        // FOLDER 6B: SHIZUKU PERMISSION
+        // =========================================================================
+        item {
+            val shizukuState by controller.shizukuBridge.state.collectAsState()
+            SettingsFolderCard(
+                title = "Shizuku Permission",
+                subtitle = "Grant Shizuku permission for the 36 [Shizuku] actions in Studio",
+                icon = Icons.Default.Security,
+                badgeText = shizukuState.badgeLabel,
+                badgeColor = when {
+                    shizukuState.isConnected -> MintSuccess
+                    shizukuState.isBinderAlive || shizukuState.isShizukuInstalled -> AmberAlert
+                    else -> RoseError
+                },
+                isExpanded = isShizukuFolderOpen,
+                onToggleExpand = {
+                    controller.shizukuBridge.refreshStatus()
+                    isShizukuFolderOpen = !isShizukuFolderOpen
+                },
+                visualEffectsQuality = settings.visualEffectsQuality,
+                reducedMotion = settings.reducedMotion,
+                modifier = Modifier.testTag("shizuku_settings_folder_card")
+            ) {
+                Text(
+                    text = shizukuState.statusMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                LiquidGlowButton(
+                    text = if (shizukuState.isConnected) {
+                        "Connected to Shizuku (Refresh)"
+                    } else {
+                        "Request Shizuku Permission"
+                    },
+                    onClick = { controller.shizukuBridge.requestPairingAndPermission() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("settings_request_shizuku_permission_button"),
+                    accentColor = if (shizukuState.isConnected) MintSuccess else CyanGlow
+                )
             }
         }
 

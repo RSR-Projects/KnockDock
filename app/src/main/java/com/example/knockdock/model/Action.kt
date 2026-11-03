@@ -56,7 +56,10 @@ enum class ActionType(
     // 9. Expanded D: Smart-Home & Connected-Device Actions
     SMART_HOME_SCENE_TRIGGER("Smart Home & Connected", "Smart-Home Scene Trigger", "Home"),
     PAIRED_DEVICE_COMMAND("Smart Home & Connected", "Paired Device Command", "Devices", requiresPcBridge = true),
-    EMERGENCY_LIGHT_SEQUENCE("Smart Home & Connected", "Emergency Light Sequence", "FlashlightOn");
+    EMERGENCY_LIGHT_SEQUENCE("Smart Home & Connected", "Emergency Light Sequence", "FlashlightOn"),
+
+    // 10. Shizuku & Shevary Privileged Actions (Strictly for [Shizuku] features only)
+    SHIZUKU_PRIVILEGED("Shizuku Privileged", "[Shizuku] Privileged Feature", "Security");
 
     companion object {
         fun fromId(id: String): ActionType = entries.find { it.name == id } ?: NOTIFICATION

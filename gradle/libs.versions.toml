@@ -98,6 +98,8 @@ androidx-credentials-play-services = { group = "androidx.credentials", name = "c
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 backdrop = { group = "io.github.kyant0", name = "backdrop", version.ref = "backdrop" }
 kyant-shapes = { group = "io.github.kyant0", name = "shapes", version.ref = "shapes" }
+shizuku-api = { group = "dev.rikka.shizuku", name = "api", version = "13.1.5" }
+shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version = "13.1.5" }
 
 
 [plugins]

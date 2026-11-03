@@ -45,7 +45,7 @@ class KnockDockRepository(
         context.applicationContext,
         KnockDockDatabase::class.java,
         "knockdock_db"
-    ).fallbackToDestructiveMigration().build()
+    ).fallbackToDestructiveMigration(dropAllTables = true).build()
 
     private val profileDao = database.profileDao()
     private val gestureDao = database.gestureDao()
@@ -102,6 +102,25 @@ class KnockDockRepository(
                 )
             }
             mappingDao.insertMappings(mappingEntities)
+        }
+
+        // Ensure all 36 [Shizuku] privileged actions are present in Action Studio
+        val existingActionIds = actionDao.getAllActions().first().map { it.id }.toSet()
+        val missingShizukuActions = com.example.knockdock.shizuku.ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES
+            .filter { feature -> "action_${feature.id}" !in existingActionIds }
+            .mapIndexed { idx, feature ->
+                ActionDefinition(
+                    id = "action_${feature.id}",
+                    name = feature.title,
+                    description = "${feature.subtitle} (${feature.category.title})",
+                    type = ActionType.SHIZUKU_PRIVILEGED,
+                    parameters = mapOf("shizukuFeatureId" to feature.id),
+                    isReversibleToggle = feature.toggleOffCommand != null,
+                    createdAtEpochMs = System.currentTimeMillis() + idx
+                ).toEntity()
+            }
+        if (missingShizukuActions.isNotEmpty()) {
+            actionDao.insertActions(missingShizukuActions)
         }
     }
 

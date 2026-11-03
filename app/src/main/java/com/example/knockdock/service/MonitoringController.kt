@@ -1,8 +1,13 @@
 package com.example.knockdock.service
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.core.app.NotificationCompat
+import com.example.MainActivity
 import com.example.knockdock.action.ActionExecutor
 import com.example.knockdock.data.KnockDockRepository
 import com.example.knockdock.model.ActionDefinition
@@ -10,6 +15,8 @@ import com.example.knockdock.model.GestureDetectionEvent
 import com.example.knockdock.recognition.GestureRecognizer
 import com.example.knockdock.sensor.SensorManagerHelper
 import com.example.knockdock.sensor.SensorReplayer
+import com.example.knockdock.shizuku.ShizukuBridgeManager
+import com.example.knockdock.shizuku.ShizukuFeatureItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,6 +27,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+
+/**
+ * Represents a completed macro action event for silent notifications, Dynamic Island HUD, and Edge Lighting.
+ */
+data class CompletedMacroEvent(
+    val id: Long = System.nanoTime(),
+    val actionName: String,
+    val gestureName: String,
+    val resultMessage: String,
+    val success: Boolean,
+    val impactCount: Int = 1,
+    val isSimulated: Boolean = false
+)
 
 /**
  * Central controller coordinating sensor streaming, gesture recognition, modifier-aware action routing,
@@ -33,6 +53,7 @@ class MonitoringController private constructor(val appContext: Context) {
     val sensorHelper: SensorManagerHelper = SensorManagerHelper(appContext, appScope)
     val gestureRecognizer: GestureRecognizer = GestureRecognizer(appScope)
     val replayer: SensorReplayer = SensorReplayer()
+    val shizukuBridge: ShizukuBridgeManager = ShizukuBridgeManager(appContext)
 
     @Volatile
     private var cachedActiveProfileId: String = "profile_desk_commander"
@@ -71,11 +92,15 @@ class MonitoringController private constructor(val appContext: Context) {
                 null
             }
         },
+        shizukuBridge = shizukuBridge,
         executorScope = appScope
     )
 
     private val _lastDetectedGesture = MutableStateFlow<GestureDetectionEvent?>(null)
     val lastDetectedGesture: StateFlow<GestureDetectionEvent?> = _lastDetectedGesture.asStateFlow()
+
+    private val _lastCompletedMacro = MutableStateFlow<CompletedMacroEvent?>(null)
+    val lastCompletedMacro: StateFlow<CompletedMacroEvent?> = _lastCompletedMacro.asStateFlow()
 
     private val _isMonitoring = MutableStateFlow(false)
     val isMonitoring: StateFlow<Boolean> = _isMonitoring.asStateFlow()
@@ -226,12 +251,168 @@ class MonitoringController private constructor(val appContext: Context) {
 
             // Record execution log in database
             val modTag = if (activeModifier != null) " [$activeModifier]" else ""
+            val fullGestureName = "${gestureEvent.gestureName}$modTag"
             repository.recordExecutionLog(
                 actionId = action.id,
                 actionName = action.name,
-                gestureName = "${gestureEvent.gestureName}$modTag",
+                gestureName = fullGestureName,
                 result = result
             )
+
+            notifyMacroWorkDone(
+                actionName = action.name,
+                gestureName = fullGestureName,
+                resultMessage = result.message,
+                success = result.success,
+                impactCount = gestureEvent.impactCount,
+                isSimulated = gestureEvent.isSynthetic
+            )
+        }
+    }
+
+    /**
+     * Emits a completed macro event to the in-app Liquid Glass Dynamic Island HUD + Edge Lighting,
+     * and posts a silent Android notification confirming the macro work is done.
+     */
+    fun notifyMacroWorkDone(
+        actionName: String,
+        gestureName: String,
+        resultMessage: String,
+        success: Boolean,
+        impactCount: Int = 1,
+        isSimulated: Boolean = false
+    ) {
+        _lastCompletedMacro.value = CompletedMacroEvent(
+            id = System.nanoTime(),
+            actionName = actionName,
+            gestureName = gestureName,
+            resultMessage = resultMessage,
+            success = success,
+            impactCount = impactCount,
+            isSimulated = isSimulated
+        )
+        postSilentWorkDoneNotification(
+            actionName = actionName,
+            gestureName = gestureName,
+            resultMessage = resultMessage,
+            success = success
+        )
+        SystemEdgeLightingOverlayManager.showEdgeLightingIfBackgroundOrLocked(
+            context = appContext,
+            actionName = actionName,
+            gestureName = gestureName,
+            impactCount = impactCount,
+            success = success
+        )
+    }
+
+    /**
+     * Executes a [ShizukuFeatureItem] strictly via the Shizuku/Shevary bridge, logs it, and emits
+     * the Full-Phone Liquid Wave + "Action Activated" HUD.
+     */
+    fun executeShizukuFeatureAndNotify(feature: ShizukuFeatureItem) {
+        appScope.launch {
+            val res = shizukuBridge.executeShizukuFeature(feature)
+            notifyMacroWorkDone(
+                actionName = feature.title,
+                gestureName = "[Shizuku] Privileged Hub",
+                resultMessage = res.output,
+                success = res.success,
+                impactCount = 2,
+                isSimulated = false
+            )
+        }
+    }
+
+    /**
+     * Creates or updates an [ActionDefinition] for the given [ShizukuFeatureItem] and binds it
+     * to a physical knock gesture (e.g. gesture_single_knock, gesture_double_knock, gesture_triple_knock)
+     * in the active profile.
+     */
+    fun bindShizukuFeatureToGesture(
+        feature: ShizukuFeatureItem,
+        gestureId: String,
+        gestureLabel: String
+    ) {
+        appScope.launch {
+            val actionId = "action_${feature.id}"
+            val actionDef = ActionDefinition(
+                id = actionId,
+                name = feature.title,
+                description = "${feature.subtitle} (Strictly executed via Shizuku/Shevary Binder)",
+                type = com.example.knockdock.model.ActionType.SHIZUKU_PRIVILEGED,
+                parameters = mapOf("shizukuFeatureId" to feature.id)
+            )
+            repository.saveAction(actionDef)
+            val activeProfile = repository.getActiveProfile().first()
+            val profileId = activeProfile?.id ?: cachedActiveProfileId
+            repository.addOrUpdateMapping(
+                profileId = profileId,
+                gestureId = gestureId,
+                actionId = actionId
+            )
+            notifyMacroWorkDone(
+                actionName = "Bound ${feature.title}",
+                gestureName = gestureLabel,
+                resultMessage = "Assigned ${feature.title} to $gestureLabel in active profile",
+                success = true,
+                impactCount = 1,
+                isSimulated = true
+            )
+        }
+    }
+
+    private fun postSilentWorkDoneNotification(
+        actionName: String,
+        gestureName: String,
+        resultMessage: String,
+        success: Boolean
+    ) {
+        try {
+            val manager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    SILENT_DONE_CHANNEL_ID,
+                    "KnockDock Silent Action Confirmations",
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    description = "Silent status confirmation when a desk knock macro finishes executing"
+                    setShowBadge(false)
+                    enableVibration(false)
+                    setSound(null, null)
+                }
+                manager.createNotificationChannel(channel)
+            }
+
+            val openIntent = Intent(appContext, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                appContext,
+                2050,
+                openIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val statusPrefix = if (success) "✓ Work Done" else "⚠ Action Notice"
+            val notification = NotificationCompat.Builder(appContext, SILENT_DONE_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("$statusPrefix • $actionName")
+                .setContentText("Triggered by $gestureName — $resultMessage")
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .bigText("Gesture: $gestureName\nAction: $actionName\nResult: $resultMessage")
+                )
+                .setSilent(true)
+                .setOnlyAlertOnce(true)
+                .setAutoCancel(true)
+                .setTimeoutAfter(9000L)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setContentIntent(pendingIntent)
+                .build()
+
+            manager.notify(SILENT_DONE_NOTIFICATION_ID, notification)
+        } catch (_: Exception) {
         }
     }
 
@@ -252,6 +433,9 @@ class MonitoringController private constructor(val appContext: Context) {
     }
 
     companion object {
+        const val SILENT_DONE_CHANNEL_ID = "knockdock_silent_done_channel"
+        const val SILENT_DONE_NOTIFICATION_ID = 2049
+
         @Volatile
         private var instance: MonitoringController? = null
 

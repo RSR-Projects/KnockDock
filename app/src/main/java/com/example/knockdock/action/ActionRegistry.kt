@@ -365,6 +365,15 @@ class ActionRegistry(private val context: Context) {
                     ),
                     isHardwareSupported = hasFlash
                 )
+                ActionType.SHIZUKU_PRIVILEGED -> ActionMetadata(
+                    type = type,
+                    title = "[Shizuku] Privileged Feature",
+                    description = "Executes a verified, phone-safe privileged system command via Shizuku, Shevary, Sui, Dhizuku, or rish ADB Binder.",
+                    parametersHelp = mapOf(
+                        "shizukuFeatureId" to "ID from the 36 [Shizuku] feature catalog (e.g. shizuku_expand_notifications)"
+                    ),
+                    isHardwareSupported = true
+                )
             }
         }
     }

@@ -11,8 +11,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -97,11 +99,13 @@ import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
 import com.kyant.shapes.Capsule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.tanh
 
 /**
  * Global motion & floating control configuration.
@@ -240,8 +244,244 @@ fun computeNavigationRenderParameters(
 }
 
 /**
- * High-performance, zero-recomposition iOS 26 Liquid Glass touch physics state for interactive controls
- * (buttons, switches, sliders, floating dock, and hero orb — NOT container cards).
+ * Kyant0 AndroidLiquidGlass (`com.kyant.backdrop.catalog.utils.DampedDragAnimation`):
+ * Multi-dimensional parallel spring animation controller exclusively for the Liquid Glass Bottom Navigation Bar
+ * (`LiquidBottomTabs`). Drives `value`, `velocity`, `pressProgress`, `scaleX`, and `scaleY` simultaneously
+ * using independent spring specifications to produce Apple iOS 26 squishy droplet movement and velocity deformation:
+ * ```
+ * val velocity = dampedDragAnimation.velocity / 50f
+ * scaleX = dampedDragAnimation.scaleX / (1f - (velocity * 0.75f).coerceIn(-0.2f, 0.2f))
+ * scaleY = dampedDragAnimation.scaleY * (1f - (velocity * 0.25f).coerceIn(-0.2f, 0.2f))
+ * ```
+ */
+@Stable
+class DampedDragAnimation(
+    private val animationScope: CoroutineScope,
+    initialValue: Float,
+    private val valueRange: ClosedFloatingPointRange<Float>,
+    private val pressedScaleX: Float = 1.18f,
+    private val pressedScaleY: Float = 1.14f
+) {
+    private val valueAnimation = Animatable(initialValue)
+    private val jellyVelocityAnimation = Animatable(0f)
+    private val pressProgressAnimation = Animatable(0f)
+    private val scaleXAnimation = Animatable(1f)
+    private val scaleYAnimation = Animatable(1f)
+
+    private val dragValueSpring = spring<Float>(
+        dampingRatio = 0.72f,
+        stiffness = 360f,
+        visibilityThreshold = 0.0005f
+    )
+    private val snapValueSpring = spring<Float>(
+        dampingRatio = 0.58f,
+        stiffness = 290f,
+        visibilityThreshold = 0.0005f
+    )
+    private val velocityTrackSpring = spring<Float>(
+        dampingRatio = 0.65f,
+        stiffness = 420f,
+        visibilityThreshold = 0.01f
+    )
+    private val velocitySettleSpring = spring<Float>(
+        dampingRatio = 0.42f,
+        stiffness = 260f,
+        visibilityThreshold = 0.01f
+    )
+    private val pressProgressSpring = spring<Float>(
+        dampingRatio = 0.68f,
+        stiffness = 380f,
+        visibilityThreshold = 0.001f
+    )
+    private val scaleXSpring = spring<Float>(
+        dampingRatio = 0.44f,
+        stiffness = 320f
+    )
+    private val scaleYSpring = spring<Float>(
+        dampingRatio = 0.44f,
+        stiffness = 320f
+    )
+
+    val value: Float get() = valueAnimation.value
+    val targetValue: Float get() = valueAnimation.targetValue
+    val velocity: Float get() = valueAnimation.velocity
+    val jellyVelocity: Float get() = jellyVelocityAnimation.value
+    val pressProgress: Float get() = pressProgressAnimation.value
+    val scaleX: Float get() = scaleXAnimation.value
+    val scaleY: Float get() = scaleYAnimation.value
+
+    var isDragging: Boolean by mutableStateOf(false)
+        private set
+
+    fun press() {
+        isDragging = true
+        animationScope.launch {
+            pressProgressAnimation.animateTo(1f, pressProgressSpring)
+        }
+        animationScope.launch {
+            scaleXAnimation.animateTo(pressedScaleX, scaleXSpring)
+        }
+        animationScope.launch {
+            scaleYAnimation.animateTo(pressedScaleY, scaleYSpring)
+        }
+    }
+
+    fun release() {
+        isDragging = false
+        animationScope.launch {
+            pressProgressAnimation.animateTo(0f, pressProgressSpring)
+        }
+        animationScope.launch {
+            scaleXAnimation.animateTo(1f, scaleXSpring)
+        }
+        animationScope.launch {
+            scaleYAnimation.animateTo(1f, scaleYSpring)
+        }
+        animationScope.launch {
+            jellyVelocityAnimation.animateTo(0f, velocitySettleSpring)
+        }
+    }
+
+    fun updateValue(newValue: Float) {
+        val clamped = newValue.coerceIn(valueRange.start, valueRange.endInclusive)
+        val delta = clamped - valueAnimation.value
+        val targetVel = (delta * 10f).coerceIn(-14f, 14f)
+        animationScope.launch {
+            valueAnimation.animateTo(clamped, dragValueSpring)
+        }
+        animationScope.launch {
+            jellyVelocityAnimation.animateTo(targetVel, velocityTrackSpring)
+            jellyVelocityAnimation.animateTo(0f, velocitySettleSpring)
+        }
+    }
+
+    fun animateToValue(targetValue: Float) {
+        val clamped = targetValue.coerceIn(valueRange.start, valueRange.endInclusive)
+        val delta = clamped - valueAnimation.value
+        if (abs(delta) > 0.01f) {
+            val impulse = (delta * 8f).coerceIn(-12f, 12f)
+            animationScope.launch {
+                jellyVelocityAnimation.animateTo(impulse, velocityTrackSpring)
+                jellyVelocityAnimation.animateTo(0f, velocitySettleSpring)
+            }
+            if (!isDragging) {
+                animationScope.launch {
+                    pressProgressAnimation.animateTo(0.85f, pressProgressSpring)
+                    pressProgressAnimation.animateTo(0f, pressProgressSpring)
+                }
+                animationScope.launch {
+                    scaleXAnimation.animateTo(1.20f, scaleXSpring)
+                    scaleXAnimation.animateTo(1f, scaleXSpring)
+                }
+                animationScope.launch {
+                    scaleYAnimation.animateTo(0.88f, scaleYSpring)
+                    scaleYAnimation.animateTo(1f, scaleYSpring)
+                }
+            }
+        }
+        animationScope.launch {
+            valueAnimation.animateTo(clamped, snapValueSpring)
+        }
+    }
+}
+
+/**
+ * Kyant0 AndroidLiquidGlass (`com.kyant.backdrop.catalog.utils.InteractiveHighlight`):
+ * Tracks touch/drag interactions on the bottom navigation bar container with hyperbolic tangent (`tanh`)
+ * soft-saturation rubber-band damping, elastic directional squish, and a touch-following specular highlight.
+ */
+@Stable
+class InteractiveHighlight(
+    private val animationScope: CoroutineScope
+) {
+    private val pressProgressAnimation = Animatable(0f)
+    private val offsetXAnimation = Animatable(0f)
+    private val offsetYAnimation = Animatable(0f)
+
+    private val pressSpring = spring<Float>(dampingRatio = 0.52f, stiffness = 360f, visibilityThreshold = 0.001f)
+    private val dragFollowSpring = spring<Float>(dampingRatio = 0.82f, stiffness = 520f, visibilityThreshold = 0.05f)
+    private val offsetReleaseSpring = spring<Float>(dampingRatio = 0.44f, stiffness = 300f, visibilityThreshold = 0.01f)
+
+    val pressProgress: Float get() = pressProgressAnimation.value
+    val offset: Offset get() = Offset(offsetXAnimation.value, offsetYAnimation.value)
+
+    var touchPosition by mutableStateOf<Offset?>(null)
+        private set
+
+    fun onDown(position: Offset) {
+        touchPosition = position
+        animationScope.launch {
+            pressProgressAnimation.animateTo(1f, pressSpring)
+        }
+        animationScope.launch {
+            offsetXAnimation.animateTo(0f, dragFollowSpring)
+        }
+        animationScope.launch {
+            offsetYAnimation.animateTo(0f, dragFollowSpring)
+        }
+    }
+
+    fun onMove(position: Offset, startPosition: Offset) {
+        touchPosition = position
+        val dx = position.x - startPosition.x
+        val dy = position.y - startPosition.y
+        animationScope.launch {
+            offsetXAnimation.animateTo(dx, dragFollowSpring)
+        }
+        animationScope.launch {
+            offsetYAnimation.animateTo(dy, dragFollowSpring)
+        }
+    }
+
+    fun onRelease() {
+        animationScope.launch {
+            pressProgressAnimation.animateTo(0f, pressSpring)
+        }
+        animationScope.launch {
+            offsetXAnimation.animateTo(0f, offsetReleaseSpring)
+        }
+        animationScope.launch {
+            offsetYAnimation.animateTo(0f, offsetReleaseSpring)
+        }
+    }
+
+    /**
+     * Kyant0 `LiquidBottomTabs` outer bar `tanh` rubber-band movement and directional liquid squish.
+     */
+    fun computeBarTransform(widthPx: Float, heightPx: Float): BarSquishTransform {
+        val w = widthPx.coerceAtLeast(1f)
+        val h = heightPx.coerceAtLeast(1f)
+        val p = pressProgress
+        val ox = offset.x
+        val oy = offset.y
+
+        // Kyant0 tanh rubber-band damping: smooth initial movement that saturates organically
+        val normX = tanh(ox / (w * 0.36f))
+        val normY = tanh(oy / (h * 0.72f))
+
+        // Subtle liquid expansion when pressed (not too big, ~5.5%), plus directional stretch & squash
+        val baseScale = 1f + 0.055f * p
+        val stretchX = abs(normX) * 0.065f * p
+        val stretchY = abs(normY) * 0.075f * p
+
+        return BarSquishTransform(
+            translationX = normX * 16f * p,
+            translationY = normY * 11f * p,
+            scaleX = (baseScale + stretchX - stretchY * 0.45f).coerceIn(0.92f, 1.12f),
+            scaleY = (baseScale + stretchY - stretchX * 0.40f).coerceIn(0.90f, 1.13f)
+        )
+    }
+}
+
+data class BarSquishTransform(
+    val translationX: Float,
+    val translationY: Float,
+    val scaleX: Float,
+    val scaleY: Float
+)
+
+/**
+ * Retained for backward compatibility with existing tests/callers; used only by the navigation bar.
  */
 @Stable
 class LiquidTouchState(
@@ -272,7 +512,6 @@ class LiquidTouchState(
         val relX = ((position.x - w * 0.5f) / (w * 0.5f)).coerceIn(-1f, 1f)
         val relY = ((position.y - h * 0.5f) / (h * 0.5f)).coerceIn(-1f, 1f)
 
-        // Immediate, fast liquid droplet squish & magnetic pull toward touch point
         offsetXValue = relX * 9.5f
         offsetYValue = relY * 7.5f
         scaleXValue = 1.078f + abs(relX) * 0.025f
@@ -286,11 +525,9 @@ class LiquidTouchState(
         val dx = (position.x - startPosition.x).coerceIn(-limit * 2.2f, limit * 2.2f)
         val dy = (position.y - startPosition.y).coerceIn(-limit * 2.2f, limit * 2.2f)
 
-        // High-mobility fluid displacement that follows the finger smoothly
         offsetXValue = (dx * 0.68f).coerceIn(-limit, limit)
         offsetYValue = (dy * 0.62f).coerceIn(-limit, limit)
 
-        // Volume-preserving elastic stretch along the drag axis
         val stretchX = (abs(dx) / (limit * 1.6f)).coerceIn(0f, 1f) * 0.135f
         val stretchY = (abs(dy) / (limit * 1.6f)).coerceIn(0f, 1f) * 0.135f
         scaleXValue = (1.035f + stretchX - stretchY * 0.55f).coerceIn(0.88f, 1.18f)
@@ -301,7 +538,6 @@ class LiquidTouchState(
         settleJob?.cancel()
         val startOx = offsetXValue
         val startOy = offsetYValue
-        // If user tapped quickly without dragging far, give an energetic elastic rebound impulse
         val startSx = if (abs(scaleXValue - 1f) < 0.05f) 1.085f else scaleXValue
         val startSy = if (abs(scaleYValue - 1f) < 0.05f) 0.925f else scaleYValue
         val startPress = pressIntensityValue
@@ -311,7 +547,6 @@ class LiquidTouchState(
             anim.animateTo(
                 targetValue = 0f,
                 animationSpec = spring(
-                    // Underdamped liquid surface-tension spring: fast initial snap + longer elastic jelly oscillation
                     dampingRatio = 0.36f,
                     stiffness = 340f
                 )
@@ -334,10 +569,6 @@ fun rememberLiquidTouchState(): LiquidTouchState {
     return remember(scope) { LiquidTouchState(scope) }
 }
 
-/**
- * Passive pointer observer that drives iOS-style Liquid Glass movement and elastic squish
- * on interactive controls without consuming pointer events.
- */
 fun Modifier.liquidTouchGesture(
     touchState: LiquidTouchState,
     enabled: Boolean = true,
@@ -365,6 +596,33 @@ fun Modifier.liquidTouchGesture(
                     }
                 }
             }
+        }
+}
+
+/**
+ * Composable modifier that applies Kyant0-style elastic liquid squish, directional stretch,
+ * rubber-band displacement, and underdamped spring rebound to any interactive button, chip, or pill.
+ */
+@Composable
+fun Modifier.liquidSquish(
+    enabled: Boolean = true,
+    maxDisplacementPx: Float = 24f
+): Modifier {
+    val config = LocalLiquidGlassConfig.current
+    val touchState = rememberLiquidTouchState()
+    val active = enabled && config.liquidTouchPhysics && !config.reducedMotion
+    if (!active) return this
+    return this
+        .liquidTouchGesture(
+            touchState = touchState,
+            enabled = true,
+            maxDisplacementPx = maxDisplacementPx
+        )
+        .graphicsLayer {
+            translationX = touchState.offsetXValue
+            translationY = touchState.offsetYValue
+            scaleX = touchState.scaleXValue
+            scaleY = touchState.scaleYValue
         }
 }
 
@@ -666,11 +924,16 @@ fun LiquidGlassCard(
             .border(BorderStroke(1.dp, borderBrush), effectiveShape)
             .then(
                 if (onClick != null) {
-                    Modifier.clickable(
-                        interactionSource = interactionSource,
-                        indication = ripple(color = primaryEdge),
-                        onClick = onClick
-                    )
+                    Modifier
+                        .liquidSquish(
+                            enabled = !reducedMotion && globalConfig.liquidTouchPhysics,
+                            maxDisplacementPx = 18f
+                        )
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = ripple(color = primaryEdge),
+                            onClick = onClick
+                        )
                 } else Modifier
             )
             .padding(contentPadding)
@@ -738,7 +1001,8 @@ fun LiquidStatusPill(
 }
 
 /**
- * iOS-style Liquid Glass button with capsule geometry, specular highlight, and liquid touch movement.
+ * iOS / Kyant0-style Liquid Glass button with capsule geometry, real backdrop refraction,
+ * touch-following specular highlight, and elastic liquid squish & stretch physics.
  */
 @Composable
 fun LiquidGlowButton(
@@ -755,9 +1019,13 @@ fun LiquidGlowButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val touchState = rememberLiquidTouchState()
-    val touchPhysicsEnabled = enabled && config.liquidTouchPhysics && !config.reducedMotion
+    val squishActive = enabled && config.liquidTouchPhysics && !config.reducedMotion
 
-    val backdrop = if (useContentBackdrop) LocalContentBackdrop.current else null
+    val backdrop = if (useContentBackdrop) {
+        LocalContentBackdrop.current ?: LocalBackdrop.current
+    } else {
+        LocalBackdrop.current
+    }
     val shape = remember { RoundedCornerShape(percent = 50) }
     val density = LocalDensity.current
 
@@ -765,8 +1033,8 @@ fun LiquidGlowButton(
         if (enabled) {
             Brush.horizontalGradient(
                 colors = listOf(
-                    accentColor.copy(alpha = if (isPressed) 0.50f else 0.34f),
-                    IndigoPulse.copy(alpha = if (isPressed) 0.40f else 0.24f)
+                    accentColor.copy(alpha = if (isPressed) 0.52f else 0.36f),
+                    IndigoPulse.copy(alpha = if (isPressed) 0.42f else 0.25f)
                 )
             )
         } else {
@@ -783,9 +1051,9 @@ fun LiquidGlowButton(
         Brush.verticalGradient(
             if (enabled) {
                 listOf(
-                    Color.White.copy(alpha = 0.55f),
-                    accentColor.copy(alpha = 0.72f),
-                    accentColor.copy(alpha = 0.30f)
+                    Color.White.copy(alpha = 0.58f),
+                    accentColor.copy(alpha = 0.74f),
+                    accentColor.copy(alpha = 0.32f)
                 )
             } else {
                 listOf(Color.White.copy(alpha = 0.12f), Color.White.copy(alpha = 0.04f))
@@ -793,12 +1061,11 @@ fun LiquidGlowButton(
         )
     }
 
-    val blurPx = with(density) { (navSettings.navBlurRadiusDp.coerceIn(0f, 40f) * 0.9f).dp.toPx() }
+    val blurPx = with(density) { (navSettings.navBlurRadiusDp.coerceIn(0f, 40f) * 0.85f).dp.toPx() }
     val lensHeightPx = with(density) { (navSettings.navRefractionHeightDp * 0.75f).dp.toPx() }
     val lensAmountPx = with(density) { (navSettings.navRefractionAmountDp * 0.75f).dp.toPx() }
-    val maxDispPx = with(density) { 24.dp.toPx() }
 
-    val glassModifier = if (useContentBackdrop && backdrop != null && enabled && config.visualEffectsQuality != "LOW") {
+    val glassModifier = if (backdrop != null && enabled && config.visualEffectsQuality != "LOW") {
         Modifier.drawBackdrop(
             backdrop = backdrop,
             shape = { shape },
@@ -814,29 +1081,31 @@ fun LiquidGlowButton(
                     )
                 }
             },
-            layerBlock = if (touchPhysicsEnabled) {
-                {
-                    translationX = touchState.offsetXValue
-                    translationY = touchState.offsetYValue
-                    scaleX = touchState.scaleXValue
-                    scaleY = touchState.scaleYValue
-                }
-            } else null,
+            highlight = { Highlight.Default },
             onDrawSurface = {
-                drawRect(SlateGlassDark.copy(alpha = 0.32f))
+                drawRect(SlateGlassDark.copy(alpha = 0.34f))
                 drawRect(brush = buttonBrush)
+                val tp = touchState.touchPoint
+                val pressAlpha = touchState.pressIntensityValue
+                if (tp != null && pressAlpha > 0.02f) {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.28f * pressAlpha),
+                                accentColor.copy(alpha = 0.18f * pressAlpha),
+                                Color.Transparent
+                            ),
+                            center = tp,
+                            radius = size.maxDimension * 0.65f
+                        ),
+                        radius = size.maxDimension * 0.65f,
+                        center = tp
+                    )
+                }
             }
         )
     } else {
         Modifier
-            .graphicsLayer {
-                if (touchPhysicsEnabled) {
-                    translationX = touchState.offsetXValue
-                    translationY = touchState.offsetYValue
-                    scaleX = touchState.scaleXValue
-                    scaleY = touchState.scaleYValue
-                }
-            }
             .clip(shape)
             .background(SlateGlassDark.copy(alpha = 0.45f))
             .background(buttonBrush)
@@ -847,9 +1116,17 @@ fun LiquidGlowButton(
             .defaultMinSize(minHeight = 40.dp)
             .liquidTouchGesture(
                 touchState = touchState,
-                enabled = touchPhysicsEnabled,
-                maxDisplacementPx = maxDispPx
+                enabled = squishActive,
+                maxDisplacementPx = 24f
             )
+            .graphicsLayer {
+                if (squishActive) {
+                    translationX = touchState.offsetXValue
+                    translationY = touchState.offsetYValue
+                    scaleX = touchState.scaleXValue
+                    scaleY = touchState.scaleYValue
+                }
+            }
             .then(glassModifier)
             .border(BorderStroke(1.dp, borderBrush), shape)
             .clickable(
@@ -885,7 +1162,7 @@ fun LiquidGlowButton(
 }
 
 /**
- * Compact circular Liquid Glass Icon Button with hardware-layer liquid touch movement.
+ * Compact circular Kyant0 Liquid Glass Icon Button with elastic squish & stretch physics.
  */
 @Composable
 fun LiquidGlassIconButton(
@@ -899,14 +1176,15 @@ fun LiquidGlassIconButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val touchState = rememberLiquidTouchState()
-    val touchPhysicsEnabled = config.liquidTouchPhysics && !config.reducedMotion
+    val squishActive = config.liquidTouchPhysics && !config.reducedMotion
     val shape = CircleShape
+    val backdrop = LocalBackdrop.current
     val density = LocalDensity.current
 
     val bgBrush = remember(accentColor, isPressed) {
         Brush.verticalGradient(
             listOf(
-                accentColor.copy(alpha = if (isPressed) 0.34f else 0.18f),
+                accentColor.copy(alpha = if (isPressed) 0.36f else 0.20f),
                 SlateGlassDark.copy(alpha = 0.64f)
             )
         )
@@ -914,10 +1192,38 @@ fun LiquidGlassIconButton(
     val borderBrush = remember(accentColor) {
         Brush.verticalGradient(
             listOf(
-                Color.White.copy(alpha = 0.38f),
-                accentColor.copy(alpha = 0.48f)
+                Color.White.copy(alpha = 0.42f),
+                accentColor.copy(alpha = 0.52f)
             )
         )
+    }
+
+    val glassSurfaceModifier = if (backdrop != null && config.visualEffectsQuality != "LOW") {
+        val blurPx = with(density) { 12.dp.toPx() }
+        val lensHeightPx = with(density) { 10.dp.toPx() }
+        val lensAmountPx = with(density) { 22.dp.toPx() }
+        Modifier.drawBackdrop(
+            backdrop = backdrop,
+            shape = { shape },
+            effects = {
+                vibrancy()
+                blur(blurPx)
+                lens(
+                    refractionHeight = lensHeightPx,
+                    refractionAmount = lensAmountPx,
+                    depthEffect = true,
+                    chromaticAberration = config.chromaticAberration
+                )
+            },
+            highlight = { Highlight.Default },
+            onDrawSurface = {
+                drawRect(brush = bgBrush)
+            }
+        )
+    } else {
+        Modifier
+            .clip(shape)
+            .background(bgBrush)
     }
 
     Box(
@@ -925,19 +1231,18 @@ fun LiquidGlassIconButton(
             .size(size)
             .liquidTouchGesture(
                 touchState = touchState,
-                enabled = touchPhysicsEnabled,
-                maxDisplacementPx = with(density) { 18.dp.toPx() }
+                enabled = squishActive,
+                maxDisplacementPx = 18f
             )
             .graphicsLayer {
-                if (touchPhysicsEnabled) {
+                if (squishActive) {
                     translationX = touchState.offsetXValue
                     translationY = touchState.offsetYValue
                     scaleX = touchState.scaleXValue
                     scaleY = touchState.scaleYValue
                 }
             }
-            .clip(shape)
-            .background(bgBrush)
+            .then(glassSurfaceModifier)
             .border(BorderStroke(1.dp, borderBrush), shape)
             .clickable(
                 interactionSource = interactionSource,
@@ -974,7 +1279,7 @@ fun LiquidGlassFloatingButton(
 }
 
 /**
- * iOS-style Liquid Glass Toggle Switch with hardware-layer liquid thumb physics.
+ * iOS / Kyant0-style Liquid Glass Toggle Switch with squishy track and bouncy liquid droplet thumb.
  */
 @Composable
 fun LiquidGlassSwitch(
@@ -987,9 +1292,8 @@ fun LiquidGlassSwitch(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val touchState = rememberLiquidTouchState()
-    val touchPhysicsEnabled = config.liquidTouchPhysics && !config.reducedMotion
+    val squishActive = config.liquidTouchPhysics && !config.reducedMotion
     val capsuleShape = remember { RoundedCornerShape(percent = 50) }
-    val density = LocalDensity.current
 
     val thumbOffset by animateDpAsState(
         targetValue = if (checked) 22.dp else 2.dp,
@@ -1001,7 +1305,7 @@ fun LiquidGlassSwitch(
     )
 
     val thumbScale by animateFloatAsState(
-        targetValue = if (isPressed) 1.14f else 1.0f,
+        targetValue = if (isPressed || touchState.pressIntensityValue > 0.2f) 1.18f else 1.0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
         label = "switch_thumb_scale"
     )
@@ -1018,13 +1322,13 @@ fun LiquidGlassSwitch(
             .height(30.dp)
             .liquidTouchGesture(
                 touchState = touchState,
-                enabled = touchPhysicsEnabled,
-                maxDisplacementPx = with(density) { 18.dp.toPx() }
+                enabled = squishActive,
+                maxDisplacementPx = 14f
             )
             .graphicsLayer {
-                if (touchPhysicsEnabled) {
-                    translationX = touchState.offsetXValue
-                    translationY = touchState.offsetYValue
+                if (squishActive) {
+                    translationX = touchState.offsetXValue * 0.6f
+                    translationY = touchState.offsetYValue * 0.6f
                     scaleX = touchState.scaleXValue
                     scaleY = touchState.scaleYValue
                 }
@@ -1070,7 +1374,7 @@ fun LiquidGlassSwitch(
 }
 
 /**
- * Interactive iOS-style Segmented Control row with liquid glass selection pills.
+ * Interactive iOS-style Segmented Control row with liquid glass selection pills (stationary container).
  */
 @Composable
 fun <T> LiquidGlassSegmentedRow(
@@ -1081,41 +1385,38 @@ fun <T> LiquidGlassSegmentedRow(
     modifier: Modifier = Modifier,
     accentColor: Color = CyanGlow
 ) {
-    val config = LocalLiquidGlassConfig.current
     val outerShape = remember { RoundedCornerShape(percent = 50) }
     val pillShape = remember { RoundedCornerShape(percent = 50) }
-    val density = LocalDensity.current
-    val touchState = rememberLiquidTouchState()
-    val touchPhysicsEnabled = config.liquidTouchPhysics && !config.reducedMotion
+    val useScrollableLayout = items.size > 3 || items.any { labelProvider(it).length > 14 }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .liquidTouchGesture(
-                touchState = touchState,
-                enabled = touchPhysicsEnabled,
-                maxDisplacementPx = with(density) { 18.dp.toPx() }
-            )
-            .graphicsLayer {
-                if (touchPhysicsEnabled) {
-                    translationX = touchState.offsetXValue * 0.85f
-                    translationY = touchState.offsetYValue * 0.85f
-                    scaleX = touchState.scaleXValue
-                    scaleY = touchState.scaleYValue
-                }
-            }
             .clip(outerShape)
             .background(SlateGlassDark.copy(alpha = 0.58f))
             .border(1.dp, Color.White.copy(alpha = 0.16f), outerShape)
+            .then(
+                if (useScrollableLayout) {
+                    Modifier.horizontalScroll(rememberScrollState())
+                } else {
+                    Modifier
+                }
+            )
             .padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         items.forEach { item ->
             val isSelected = item == selectedItem
             Box(
                 modifier = Modifier
-                    .weight(1f)
+                    .then(
+                        if (useScrollableLayout) {
+                            Modifier.defaultMinSize(minWidth = 84.dp)
+                        } else {
+                            Modifier.weight(1f)
+                        }
+                    )
                     .clip(pillShape)
                     .then(
                         if (isSelected) {
@@ -1138,7 +1439,7 @@ fun <T> LiquidGlassSegmentedRow(
                         } else Modifier
                     )
                     .clickable { onSelectItem(item) }
-                    .padding(vertical = 7.dp, horizontal = 2.dp),
+                    .padding(vertical = 8.dp, horizontal = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -1157,7 +1458,7 @@ fun <T> LiquidGlassSegmentedRow(
 }
 
 /**
- * Interactive Liquid Glass Slider with glass capsule housing, hardware-layer liquid touch squish, and glowing thumb.
+ * Interactive Liquid Glass Slider with glass capsule housing (stationary container).
  */
 @Composable
 fun LiquidGlassSlider(
@@ -1168,28 +1469,11 @@ fun LiquidGlassSlider(
     accentColor: Color = CyanGlow,
     modifier: Modifier = Modifier
 ) {
-    val config = LocalLiquidGlassConfig.current
     val capsuleShape = remember { RoundedCornerShape(percent = 50) }
-    val density = LocalDensity.current
-    val touchState = rememberLiquidTouchState()
-    val touchPhysicsEnabled = config.liquidTouchPhysics && !config.reducedMotion
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .liquidTouchGesture(
-                touchState = touchState,
-                enabled = touchPhysicsEnabled,
-                maxDisplacementPx = with(density) { 14.dp.toPx() }
-            )
-            .graphicsLayer {
-                if (touchPhysicsEnabled) {
-                    translationX = touchState.offsetXValue * 0.45f
-                    translationY = touchState.offsetYValue * 0.75f
-                    scaleX = touchState.scaleXValue
-                    scaleY = touchState.scaleYValue
-                }
-            }
             .clip(capsuleShape)
             .background(SlateGlassDark.copy(alpha = 0.52f))
             .border(1.dp, Color.White.copy(alpha = 0.16f), capsuleShape)

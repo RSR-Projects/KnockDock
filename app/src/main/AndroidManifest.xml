@@ -42,6 +42,15 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="http" />
         </intent>
+        <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="com.shevary.shizuku" />
+        <package android:name="app.shevary.shizuku" />
+        <package android:name="moe.shizuku.manager" />
+        <package android:name="com.rosan.dhizuku" />
+        <package android:name="in.sunilpaulmathew.ashell" />
+        <package android:name="com.draco.ladb" />
+        <package android:name="me.piebridge.brevent" />
+        <package android:name="com.termux" />
     </queries>
 
     <application
@@ -54,6 +63,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
+
+        <meta-data
+            android:name="moe.shizuku.client.V3_SUPPORT"
+            android:value="true" />
+
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <activity
             android:name="com.example.MainActivity"
@@ -77,6 +98,15 @@
                 android:value="Desk vibration acoustic sensor monitoring for hands-free macro automation" />
         </service>
 
-    </application>
+        <activity
+            android:name="com.example.knockdock.service.LockscreenEdgeLightingActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
+    </application>
 </manifest>

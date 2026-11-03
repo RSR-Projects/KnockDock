@@ -70,6 +70,8 @@ import com.example.knockdock.model.MacroConcurrencyPolicy
 import com.example.knockdock.model.StepConditionType
 import com.example.knockdock.model.StepFailurePolicy
 import com.example.knockdock.service.MonitoringController
+import com.example.knockdock.shizuku.ShizukuBridgeManager
+import com.example.knockdock.shizuku.ShizukuCategory
 import com.example.knockdock.ui.theme.LiquidGlassCard
 import com.example.knockdock.ui.theme.LiquidGlassIconButton
 import com.example.knockdock.ui.theme.LiquidGlassSegmentedRow
@@ -78,6 +80,7 @@ import com.example.knockdock.ui.theme.LiquidGlowButton
 import com.example.knockdock.ui.theme.LiquidStatusPill
 import com.example.ui.theme.AmberAlert
 import com.example.ui.theme.CyanGlow
+import com.example.ui.theme.CyanGlowBright
 import com.example.ui.theme.IndigoPulse
 import com.example.ui.theme.MintSuccess
 import com.example.ui.theme.RoseError
@@ -170,6 +173,12 @@ fun ActionStudioScreen(
     var isAppDropdownExpanded by remember { mutableStateOf(false) }
     var isGestureDropdownExpanded by remember { mutableStateOf(false) }
     var isSettingDropdownExpanded by remember { mutableStateOf(false) }
+    var isShizukuFeatureDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedShizukuCategory by remember { mutableStateOf<ShizukuCategory?>(null) }
+    val shizukuState by controller.shizukuBridge.state.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        controller.shizukuBridge.refreshStatus()
+    }
 
     var latestTestResult by remember { mutableStateOf<ActionExecutionResult?>(null) }
     var isTestingAction by remember { mutableStateOf(false) }
@@ -314,6 +323,16 @@ fun ActionStudioScreen(
                 actionParam2 = "15"
                 actionParam3 = ""
                 actionParam4 = ""
+            }
+            ActionType.SHIZUKU_PRIVILEGED -> {
+                val firstFeat = ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.first()
+                actionParam1 = firstFeat.id
+                actionParam2 = firstFeat.shellCommand
+                actionParam3 = ""
+                actionParam4 = ""
+                if (actionName.isBlank()) actionName = firstFeat.title
+                if (actionDescription.isBlank()) actionDescription = firstFeat.subtitle
+                isReversibleToggle = firstFeat.toggleOffCommand != null
             }
             else -> {
                 actionParam1 = ""
@@ -486,6 +505,16 @@ fun ActionStudioScreen(
                 actionParam3 = ""
                 actionParam4 = ""
             }
+            ActionType.SHIZUKU_PRIVILEGED -> {
+                val featId = action.parameters["shizukuFeatureId"]
+                    ?: ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.first().id
+                val feat = ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.find { it.id == featId }
+                    ?: ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.first()
+                actionParam1 = feat.id
+                actionParam2 = feat.shellCommand
+                actionParam3 = ""
+                actionParam4 = ""
+            }
             else -> {
                 actionParam1 = action.parameters.values.firstOrNull() ?: ""
                 actionParam2 = ""
@@ -615,14 +644,24 @@ fun ActionStudioScreen(
                 params["pattern"] = actionParam1.ifEmpty { "SLOW_BEACON" }
                 params["durationSeconds"] = actionParam2.ifEmpty { "15" }
             }
+            ActionType.SHIZUKU_PRIVILEGED -> {
+                val featId = actionParam1.ifEmpty { ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.first().id }
+                params["shizukuFeatureId"] = featId
+            }
             else -> {}
         }
+
+        val shizukuFeat = if (selectedType == ActionType.SHIZUKU_PRIVILEGED) {
+            ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.find { it.id == actionParam1 }
+                ?: ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.first()
+        } else null
 
         val name = actionName.trim().ifEmpty {
             when (selectedType) {
                 ActionType.LAUNCH_APP -> "Launch ${installedApps.find { it.packageName == actionParam1 }?.appLabel ?: "App"}"
                 ActionType.LAUNCH_URL -> "Open Web URL"
                 ActionType.SYSTEM_SETTING -> "Open $actionParam1 Settings"
+                ActionType.SHIZUKU_PRIVILEGED -> shizukuFeat?.title ?: "[Shizuku] Privileged Feature"
                 else -> "${selectedType.displayName} Macro"
             }
         }
@@ -630,7 +669,9 @@ fun ActionStudioScreen(
         return ActionDefinition(
             id = id,
             name = name,
-            description = actionDescription.trim().ifEmpty { "${selectedType.displayName} action" },
+            description = actionDescription.trim().ifEmpty {
+                shizukuFeat?.subtitle ?: "${selectedType.displayName} action"
+            },
             type = selectedType,
             parameters = params,
             steps = if (selectedType == ActionType.MULTI_STEP_SEQUENCE) sequenceSteps.toList() else emptyList(),
@@ -656,6 +697,7 @@ fun ActionStudioScreen(
 
     val categories = listOf(
         "All",
+        "Shizuku Privileged",
         "Workspace & Profile",
         "Music & Presentation",
         "Productivity & Capture",
@@ -1081,6 +1123,91 @@ fun ActionStudioScreen(
             }
         }
 
+        // SHIZUKU PERMISSION CARD (Clean permission request without listing client names)
+        item {
+            val statusColor = when {
+                shizukuState.isConnected -> MintSuccess
+                shizukuState.isBinderAlive || shizukuState.isShizukuInstalled -> AmberAlert
+                else -> RoseError
+            }
+            LiquidGlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("studio_shizuku_permission_card"),
+                accentColor = if (shizukuState.isConnected) MintSuccess else IndigoPulse,
+                visualEffectsQuality = settings.visualEffectsQuality,
+                reducedMotion = settings.reducedMotion
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 10.dp)
+                        ) {
+                            Text(
+                                text = "[Shizuku] Privileged Actions (36 Available)",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = shizukuState.statusMessage,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        LiquidStatusPill(
+                            text = shizukuState.badgeLabel,
+                            statusColor = statusColor
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        LiquidGlowButton(
+                            text = if (shizukuState.isConnected) {
+                                "Connected to Shizuku"
+                            } else {
+                                "Request Shizuku Permission"
+                            },
+                            onClick = { controller.shizukuBridge.requestPairingAndPermission() },
+                            accentColor = if (shizukuState.isConnected) MintSuccess else CyanGlow,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("request_shizuku_permission_button")
+                        )
+                        LiquidGlowButton(
+                            text = if (selectedCategoryFilter == "Shizuku Privileged") {
+                                "Show All Actions"
+                            } else {
+                                "View 36 [Shizuku] Actions"
+                            },
+                            onClick = {
+                                selectedCategoryFilter = if (selectedCategoryFilter == "Shizuku Privileged") {
+                                    "All"
+                                } else {
+                                    "Shizuku Privileged"
+                                }
+                            },
+                            accentColor = IndigoPulse,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+
         // Action Editor / Builder Card
         if (isEditorOpen) {
             item {
@@ -1156,15 +1283,26 @@ fun ActionStudioScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Category & Action Type Dropdown
-                        Text("Action Category & Type (30 Actions Available)", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        // Category & Action Type Dropdown (Includes all standard actions + all 36 [Shizuku] features)
+                        Text(
+                            text = "Action Category & Type (All Standard + 36 [Shizuku] Actions)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         ExposedDropdownMenuBox(
                             expanded = isTypeDropdownExpanded,
                             onExpandedChange = { isTypeDropdownExpanded = it }
                         ) {
+                            val selectedDisplayLabel = if (selectedType == ActionType.SHIZUKU_PRIVILEGED) {
+                                val feat = ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.find { it.id == actionParam1 }
+                                    ?: ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.first()
+                                "Shizuku Privileged: ${feat.title}"
+                            } else {
+                                "${selectedType.categoryName}: ${selectedType.displayName}"
+                            }
                             OutlinedTextField(
-                                value = "${selectedType.categoryName}: ${selectedType.displayName}",
+                                value = selectedDisplayLabel,
                                 onValueChange = {},
                                 readOnly = true,
                                 singleLine = true,
@@ -1190,15 +1328,58 @@ fun ActionStudioScreen(
                                     DropdownMenuItem(
                                         text = {
                                             Column {
-                                                Text("${type.categoryName} • ${type.displayName}", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                                                Text(
+                                                    text = "${type.categoryName} • ${type.displayName}",
+                                                    color = TextPrimary,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
                                                 if (type.requiresPcBridge) {
-                                                    Text("Requires Paired Windows PC Bridge", style = MaterialTheme.typography.labelSmall, color = AmberAlert)
+                                                    Text(
+                                                        text = "Requires Paired Windows PC Bridge",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = AmberAlert
+                                                    )
                                                 }
                                             }
                                         },
                                         onClick = {
                                             selectedType = type
                                             applyDefaultParamsForType(type)
+                                            isTypeDropdownExpanded = false
+                                        }
+                                    )
+                                }
+
+                                // Also list all 36 [Shizuku] features directly inside Add Action dropdown
+                                ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.forEachIndexed { idx, feat ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Column {
+                                                Text(
+                                                    text = "#${idx + 1} ${feat.title}",
+                                                    color = CyanGlowBright,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = "${feat.category.title} • ${feat.subtitle}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = TextSecondary,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            selectedType = ActionType.SHIZUKU_PRIVILEGED
+                                            actionParam1 = feat.id
+                                            actionParam2 = feat.shellCommand
+                                            actionName = feat.title
+                                            actionDescription = feat.subtitle
+                                            isReversibleToggle = feat.toggleOffCommand != null
                                             isTypeDropdownExpanded = false
                                         }
                                     )
@@ -1742,6 +1923,224 @@ fun ActionStudioScreen(
                                 }
                             }
 
+                            ActionType.SHIZUKU_PRIVILEGED -> {
+                                val currentFeature = ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.find { it.id == actionParam1 }
+                                    ?: ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.first()
+                                val featuresForCategory = remember(selectedShizukuCategory) {
+                                    if (selectedShizukuCategory == null) {
+                                        ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES
+                                    } else {
+                                        ShizukuBridgeManager.ALL_36_SHIZUKU_FEATURES.filter { it.category == selectedShizukuCategory }
+                                    }
+                                }
+
+                                // Request Shizuku Permission row inside Add Action
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedRectangle(12.dp))
+                                        .background(IndigoPulse.copy(alpha = 0.16f))
+                                        .padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(end = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = when {
+                                                shizukuState.isConnected -> "Connected to Shizuku"
+                                                shizukuState.isBinderAlive -> "Shizuku Permission Required"
+                                                shizukuState.isShizukuInstalled -> "Shizuku Service Not Running"
+                                                else -> "Shizuku Not Connected"
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = when {
+                                                shizukuState.isConnected -> MintSuccess
+                                                shizukuState.isBinderAlive || shizukuState.isShizukuInstalled -> AmberAlert
+                                                else -> RoseError
+                                            },
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = shizukuState.statusMessage,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = TextSecondary,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    LiquidGlowButton(
+                                        text = if (shizukuState.isConnected) "Connected" else "Request Permission",
+                                        onClick = { controller.shizukuBridge.requestPairingAndPermission() },
+                                        accentColor = if (shizukuState.isConnected) MintSuccess else CyanGlow
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                // Filter by Shizuku Category
+                                Text(
+                                    text = "Filter [Shizuku] Category",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    val allSelected = selectedShizukuCategory == null
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedRectangle(12.dp))
+                                            .background(if (allSelected) CyanGlow.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.06f))
+                                            .border(
+                                                1.dp,
+                                                if (allSelected) CyanGlow else Color.White.copy(alpha = 0.12f),
+                                                RoundedRectangle(12.dp)
+                                            )
+                                            .clickable { selectedShizukuCategory = null }
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = "All (36)",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = if (allSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (allSelected) TextPrimary else TextSecondary,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
+                                    ShizukuCategory.entries.forEach { cat ->
+                                        val isCatSelected = selectedShizukuCategory == cat
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedRectangle(12.dp))
+                                                .background(if (isCatSelected) CyanGlow.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.06f))
+                                                .border(
+                                                    1.dp,
+                                                    if (isCatSelected) CyanGlow else Color.White.copy(alpha = 0.12f),
+                                                    RoundedRectangle(12.dp)
+                                                )
+                                                .clickable {
+                                                    selectedShizukuCategory = if (isCatSelected) null else cat
+                                                }
+                                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                        ) {
+                                            Text(
+                                                text = cat.title,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = if (isCatSelected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isCatSelected) TextPrimary else TextSecondary,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Text(
+                                    text = "Select [Shizuku] Feature (${featuresForCategory.size} shown)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                ExposedDropdownMenuBox(
+                                    expanded = isShizukuFeatureDropdownExpanded,
+                                    onExpandedChange = { isShizukuFeatureDropdownExpanded = it }
+                                ) {
+                                    OutlinedTextField(
+                                        value = currentFeature.title,
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(16.dp),
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = isShizukuFeatureDropdownExpanded)
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                            .testTag("shizuku_feature_dropdown"),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = CyanGlow,
+                                            unfocusedBorderColor = Color.White.copy(alpha = 0.22f),
+                                            focusedTextColor = TextPrimary,
+                                            unfocusedTextColor = TextPrimary
+                                        )
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = isShizukuFeatureDropdownExpanded,
+                                        onDismissRequest = { isShizukuFeatureDropdownExpanded = false },
+                                        containerColor = SlateGlassDark
+                                    ) {
+                                        featuresForCategory.forEachIndexed { idx, feat ->
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Column {
+                                                        Text(
+                                                            text = "${idx + 1}. ${feat.title}",
+                                                            color = TextPrimary,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                        Text(
+                                                            text = feat.subtitle,
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = TextSecondary,
+                                                            maxLines = 2,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                },
+                                                onClick = {
+                                                    actionParam1 = feat.id
+                                                    actionParam2 = feat.shellCommand
+                                                    actionName = feat.title
+                                                    actionDescription = feat.subtitle
+                                                    isReversibleToggle = feat.toggleOffCommand != null
+                                                    isShizukuFeatureDropdownExpanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedRectangle(12.dp))
+                                        .background(Color.Black.copy(alpha = 0.35f))
+                                        .padding(10.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(
+                                            text = currentFeature.subtitle,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextPrimary
+                                        )
+                                        Text(
+                                            text = "Shell: ${currentFeature.shellCommand}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = CyanGlowBright,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
+
                             ActionType.MULTI_STEP_SEQUENCE -> {
                                 Text(
                                     text = "Macro Sequence Steps (${sequenceSteps.size}) • Conditions & Recovery",
@@ -2274,11 +2673,15 @@ fun ActionStudioScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("action_card_${action.id}"),
+                accentColor = if (action.type == ActionType.SHIZUKU_PRIVILEGED) IndigoPulse else null,
                 visualEffectsQuality = settings.visualEffectsQuality,
                 reducedMotion = settings.reducedMotion
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // Top Row: Action Name + Category Pill
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Row 1: Action Name (full readable width) + single clean category pill
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -2295,44 +2698,49 @@ fun ActionStudioScreen(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            if (action.type.requiresPcBridge) {
-                                LiquidStatusPill(
-                                    text = "PC",
-                                    statusColor = AmberAlert
-                                )
-                            }
-                            if (action.isReversibleToggle) {
-                                LiquidStatusPill(
-                                    text = if (toggleState?.isToggledOn == true) "ON" else "OFF",
-                                    statusColor = if (toggleState?.isToggledOn == true) MintSuccess else IndigoPulse
-                                )
-                            }
-                            LiquidStatusPill(
-                                text = action.type.categoryName.substringBefore(" &"),
-                                statusColor = CyanGlow
-                            )
-                        }
+                        LiquidStatusPill(
+                            text = if (action.type == ActionType.SHIZUKU_PRIVILEGED) {
+                                "[Shizuku]"
+                            } else {
+                                action.type.categoryName.substringBefore(" &")
+                            },
+                            statusColor = if (action.type == ActionType.SHIZUKU_PRIVILEGED) IndigoPulse else CyanGlow
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    // Row 2: Full-width description (never squeezed next to icon buttons)
+                    Text(
+                        text = action.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
 
-                    // Bottom Row: Description + Glass Icon Buttons
+                    // Row 3: Status badges on left + spacious action buttons on right
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = action.description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(end = 12.dp),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (action.type.requiresPcBridge) {
+                                LiquidStatusPill(
+                                    text = "PC Bridge",
+                                    statusColor = AmberAlert
+                                )
+                            }
+                            if (action.isReversibleToggle) {
+                                LiquidStatusPill(
+                                    text = if (toggleState?.isToggledOn == true) "Toggle: ON" else "Toggle: OFF",
+                                    statusColor = if (toggleState?.isToggledOn == true) MintSuccess else IndigoPulse
+                                )
+                            }
+                        }
 
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),

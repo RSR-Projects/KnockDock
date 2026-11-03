@@ -118,6 +118,7 @@ class ActionExecutor(
     private val getActiveProfileId: (() -> String?)? = null,
     private val isPcPairedProvider: (() -> Boolean)? = null,
     private val onRunSecondaryActionById: (suspend (String, Boolean) -> ActionExecutionResult?)? = null,
+    private val shizukuBridge: com.example.knockdock.shizuku.ShizukuBridgeManager? = null,
     private val executorScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
     private val audioManager = try { context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager } catch (_: Throwable) { null }
@@ -806,6 +807,35 @@ class ActionExecutor(
                     ActionType.SMART_HOME_SCENE_TRIGGER -> executeSmartHomeSceneTrigger(step, stepStartTime, isSimulated)
                     ActionType.PAIRED_DEVICE_COMMAND -> executePairedDeviceCommand(step, stepStartTime, isSimulated)
                     ActionType.EMERGENCY_LIGHT_SEQUENCE -> executeEmergencyLightSequence(step, stepStartTime, isSimulated)
+                    ActionType.SHIZUKU_PRIVILEGED -> {
+                        val featureId = step.parameters["shizukuFeatureId"]?.ifBlank { "shizuku_expand_notifications" } ?: "shizuku_expand_notifications"
+                        if (isSimulated) {
+                            StepExecutionReport(
+                                step.stepId,
+                                step.title,
+                                true,
+                                "[DRY-RUN] Would run [Shizuku] privileged feature '$featureId' via Shizuku/Shevary Binder",
+                                System.currentTimeMillis() - stepStartTime
+                            )
+                        } else if (shizukuBridge == null) {
+                            StepExecutionReport(
+                                step.stepId,
+                                step.title,
+                                false,
+                                "[Shizuku] Bridge is not initialized.",
+                                System.currentTimeMillis() - stepStartTime
+                            )
+                        } else {
+                            val res = shizukuBridge.executeShizukuFeatureById(featureId, isSimulated = isSimulated)
+                            StepExecutionReport(
+                                step.stepId,
+                                step.title,
+                                res.success,
+                                res.output,
+                                System.currentTimeMillis() - stepStartTime
+                            )
+                        }
+                    }
                 }
             } catch (ce: CancellationException) {
                 throw ce
@@ -2104,6 +2134,7 @@ class ActionExecutor(
         } catch (_: Throwable) {}
 
         // 2. Build ActivityOptions allowing background activity start on Android 13/14+
+        @Suppress("DEPRECATION")
         val optionsBundle = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 ActivityOptions.makeBasic()

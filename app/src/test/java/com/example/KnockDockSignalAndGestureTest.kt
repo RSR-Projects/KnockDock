@@ -87,6 +87,38 @@ class KnockDockSignalAndGestureTest {
         )
         assertNotNull("Impact must be detected when phone is stationary on desk", finalImpact)
         assertEquals("Z", finalImpact?.dominantAxis)
+
+        // Case 3: Phone held in hand (tilted at 38 degrees) must be rejected
+        val handTiltResult = VibrationFilter.FilteredResult(
+            impulse = 6.2f,
+            filteredX = 1.5f,
+            filteredY = 2.0f,
+            filteredZ = 5.6f,
+            currentNoiseFloor = 0.2f,
+            tiltAngleDegrees = 38.0f
+        )
+        val handImpact = detector.processImpulse(
+            timestampNanos = 3_000_000_000L,
+            filteredResult = handTiltResult,
+            gyroAngularVelocity = 0.15f,
+            isSynthetic = false
+        )
+        assertNull("Impact must be rejected when phone is tilted/held in hand", handImpact)
+
+        // Case 4: Rapid second knock on desk (e.g. 200ms after first knock with slight camera-bump micro-rocking 0.45 rad/s) MUST succeed
+        detector.processImpulse(
+            timestampNanos = 3_200_000_000L,
+            filteredResult = filterResult,
+            gyroAngularVelocity = 0.45f,
+            isSynthetic = false
+        )
+        val secondKnockImpact = detector.processImpulse(
+            timestampNanos = 3_245_000_000L,
+            filteredResult = decayResult,
+            gyroAngularVelocity = 0.10f,
+            isSynthetic = false
+        )
+        assertNotNull("Rapid second knock on desk with minor camera-bump rocking must be detected", secondKnockImpact)
     }
 
     @Test
@@ -212,8 +244,8 @@ class KnockDockSignalAndGestureTest {
     }
 
     @Test
-    fun testAllThirtyActionTypesExistAndDefaultPresetsCoverExpansion() {
-        assertEquals("ActionType enum should have 30 total actions (15 original + 15 new)", 30, ActionType.entries.size)
+    fun testAllActionTypesExistAndDefaultPresetsCoverExpansion() {
+        assertEquals("ActionType enum should have 31 total actions (30 standard + SHIZUKU_PRIVILEGED)", 31, ActionType.entries.size)
 
         // Verify all 15 new action types are present in ActionType
         val expectedNewTypes = listOf(

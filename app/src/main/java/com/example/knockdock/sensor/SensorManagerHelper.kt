@@ -182,7 +182,12 @@ class SensorManagerHelper(
                 gyroY = gyroY,
                 gyroZ = gyroZ,
                 angularVelocity = gyroAngularVel,
-                isStationaryOnDesk = gyroAngularVel < 0.6f,
+                isStationaryOnDesk = impactDetector.isDeviceStationaryOnDesk(
+                    gyroAngularVelocity = gyroAngularVel,
+                    tiltAngleDegrees = filtered.tiltAngleDegrees,
+                    gravityInstability = filtered.gravityInstability,
+                    timestampNanos = timestampNanos
+                ),
                 currentNoiseFloor = filtered.currentNoiseFloor,
                 lastImpactTimeNanos = if (detectedImpact != null) timestampNanos else _telemetryState.value.lastImpactTimeNanos,
                 isMonitoring = isRegistered || isSynthetic,
